@@ -1,0 +1,328 @@
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+
+# Leer archivo SHP usando read_sf()
+Manzanas_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MANZANA.shp")
+Secciones_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\SECCION.shp")
+Municipios_HIDALGO_DF1 <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
+Resultados <- read_sf("D:\\52556\\Documents\\Proyecto F\\Resultados_24.csv")
+Resultados <- Resultados %>% select( -"field_1")
+
+Resultados$SECCION <- as.numeric(Resultados$SECCION)
+Resultados$ENTIDAD <- as.numeric(Resultados$ENTIDAD)
+
+Resultados_HIDALGO <- filter(Resultados, ENTIDAD == 13)
+
+dataHIDALGO <- st_drop_geometry(Secciones_HIDALGO)
+dataHIDALGO <- dataHIDALGO %>% select( -"ID",-"TIPO",-"CONTROL",-"GEOMETRY1_")
+Resultados_HIDALGO <- left_join(Resultados_HIDALGO, dataHIDALGO, by = c("SECCION","ENTIDAD"))
+
+
+Resultados_HIDALGO_DF1 <- filter(Resultados_HIDALGO, DISTRITO == 1)
+Secciones_HIDALGO_DF1 <- filter(Secciones_HIDALGO,  DISTRITO == 1)
+# Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_HIDALGO_DF1
+Municipios_DF1 <- unique(Secciones_HIDALGO_DF1$MUNICIPIO)
+
+# Filtrar Municipios_HIDALGO_DF1
+Municipios_HIDALGO_DF1 <- Municipios_HIDALGO_DF1[Municipios_HIDALGO_DF1$MUNICIPIO %in% Municipios_DF1, ]
+
+Resultados_HIDALGO_DF1$SECCION <- as.numeric(Resultados_HIDALGO_DF1$SECCION)
+Resultados_HIDALGO_DF1$ENTIDAD <- as.numeric(Resultados_HIDALGO_DF1$ENTIDAD)
+
+# Convertir datos a número
+Resultados_HIDALGO_DF1 $`CANDIDATO/A NO REGISTRADO/A` <- as.numeric(Resultados_HIDALGO_DF1 $`CANDIDATO/A NO REGISTRADO/A`)
+Resultados_HIDALGO_DF1 $`VOTOS NULOS` <- as.numeric(Resultados_HIDALGO_DF1 $`VOTOS NULOS`)
+Resultados_HIDALGO_DF1 $LISTA_NOMINAL_CASILLA <- as.numeric(Resultados_HIDALGO_DF1 $LISTA_NOMINAL_CASILLA)
+Resultados_HIDALGO_DF1 $VaxMex_21 <- as.numeric(Resultados_HIDALGO_DF1 $VaxMex_21)
+Resultados_HIDALGO_DF1 $Morena_21 <- as.numeric(Resultados_HIDALGO_DF1 $Morena_21)
+Resultados_HIDALGO_DF1 $MC_21 <- as.numeric(Resultados_HIDALGO_DF1 $MC_21)
+Resultados_HIDALGO_DF1 $porcentaje_VPM <- as.numeric(Resultados_HIDALGO_DF1 $porcentaje_VPM)
+Resultados_HIDALGO_DF1 $porcentaje_Morena <- as.numeric(Resultados_HIDALGO_DF1 $porcentaje_Morena)
+Resultados_HIDALGO_DF1 $porcentaje_MC <- as.numeric(Resultados_HIDALGO_DF1 $porcentaje_MC)
+
+Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% 
+    mutate( diferencia = porcentaje_VPM - porcentaje_Morena)
+
+# Crear quintiles
+quintilesF <- quantile(Resultados_HIDALGO_DF1$porcentaje_VPM, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesM <- quantile(Resultados_HIDALGO_DF1$porcentaje_Morena, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesD <- quantile(Resultados_HIDALGO_DF1$diferencia, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+
+
+# Agrega columna con quintiles
+Resultados_HIDALGO_DF1$quintilF <- cut(Resultados_HIDALGO_DF1$porcentaje_VPM, breaks = quintilesF, include.lowest = TRUE)
+Resultados_HIDALGO_DF1$quintilM <- cut(Resultados_HIDALGO_DF1$porcentaje_Morena, breaks = quintilesM, include.lowest = TRUE)
+Resultados_HIDALGO_DF1$quintilD <- cut(Resultados_HIDALGO_DF1$diferencia, breaks = quintilesD, include.lowest = TRUE)
+
+Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
+
+# Unir los dataframes por SECCION y ENTIDAD 
+mapaHIDALGO_DF1 <- left_join(Secciones_HIDALGO_DF1, Resultados_HIDALGO_DF1, by = c("SECCION", "ENTIDAD"))
+
+#Crea el mapa del distrito
+HIDALGODF <- mapa300_24[mapa300_24$ENTIDAD == "13", ]
+
+#Mapa Resultados
+Mapa_Resultados <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = mapaHIDALGO_DF1, aes(fill = GANADOR), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "red", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 1, fill = "white", color = "red", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "brown", "VPM" = "blue", "MC" = "orange", "EMPATE" = "yellow" ), name = "Resultado electoral\n de la sección", labels = c("EMPATE","Juntos Haremos Historia", "Fuerza y Corazón por México")) +
+    labs(title = "¿Dónde ganó cada coalición en el\nDistrito Federal 1 de Hidalgo?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist_white(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 2)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_Resultados.pdf", 
+       plot = Mapa_Resultados, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+#Mapa FAM
+Mapa_FAM <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = mapaHIDALGO_DF1, aes(fill = quintilF), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "red", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 1, fill = "white", color = "red", alpha = 0 , label.size = NA) +
+    scale_fill_brewer(palette = "Spectral", name = "Competitividad\n de la manzana", labels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad")) +
+    labs(title = "Competitividad Electoral del FAM en el\nDistrito Federal 1 de Hidalgo",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+      theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_FAM.pdf", 
+       plot = Mapa_FAM, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa JHH
+Mapa_JHH <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = mapaHIDALGO_DF1, aes(fill = quintilM), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "red", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 1, fill = "white", color = "red", alpha = 0 , label.size = NA) +
+    scale_fill_brewer(palette = "Paired", name = "Competitividad\n de la manzana", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
+    labs(title = "Competitividad Electoral de JHH en el\nDistrito Federal 1 de Hidalgo",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+       theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_JHH.pdf", 
+       plot = Mapa_JHH, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Diferencia
+Mapa_Diferencia <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = mapaHIDALGO_DF1, aes(fill = quintilD), alpha = .7, color = NA) +
+       geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "red", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 1, fill = "white", color = "red", alpha = 0 , label.size = NA) +
+    scale_fill_brewer(palette = "RdYlGn", name = "Competitividad\n de la manzana", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
+    labs(title = "Competitividad Electoral Comparada en el\nDistrito Federal 1 de Hidalgo",
+         subtitle = "FAM contra JHH",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+       theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_Diferencia.pdf", 
+       plot = Mapa_Diferencia, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa resultados24
+Mapa_resultados24 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = HIDALGODF, aes(fill = GANADOR), alpha = .7, color = "grey") +
+    geom_sf_label(data = HIDALGODF, aes(label = DISTRITO), size = 4, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Morena" = "brown", "VPM" = "blue","MC" = "darkorange" ), name = "Resultado electoral\n de la sección", labels = c("Juntos Haremos Historia", "Fuerza y Corazón por México.")) +
+    labs(title = "¿Dónde ganaría cada coalición en Hidalgo?",
+         subtitle = "Con la nueva distritación para 2024",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 2)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_resultados24.pdf", 
+       plot = Mapa_resultados24, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+#Mapa SigladoFAM
+Mapa_SigladoFAM <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = HIDALGODF, aes(fill = SIGLADO_FAM), alpha = .7, color = "grey") +
+    geom_sf_label(data = HIDALGODF, aes(label = DISTRITO), size = 4, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("PRI" = "red", "PAN" = "blue","PRD" = "yellow","Sin Coalición"="white" ), name = "Partido que\nsiglará", limits = c("PRI", "PAN","PRD","Sin Coalición")) +
+    labs(title = "¿Cómo quedó el acuerdo para 2024?",
+         subtitle = "Para la Coalición Fuerza y Corazón por México en Hidalgo",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 2)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoFAM.pdf", 
+       plot = Mapa_SigladoFAM, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+# Mapa SigladoSHH
+Mapa_SigladoSHH <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 7) +
+    geom_sf(data = HIDALGODF, aes(fill = SIGLADO_JHH), alpha = .9, color = "grey") +
+    geom_sf_label(data = HIDALGODF, aes(label = DISTRITO), size = 4, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("PRI" = "red", "PAN" = "blue", "PRD" = "#ffff00","MORENA"="#6F4E37", "PT" = "brown","PVEM"= "green", "MC"= "orange", "Sin Coalición" = "grey"), 
+                      name = "Partido que\nsiglará") +
+    labs(title = "¿Qué partido sigla cada distrito en HIDALGO?",
+         subtitle = "Para la coalición Sigamos Haciendo Historia",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    theme(legend.position = "bottom",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_text(size = 12, color = "#014d64", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoSHH.pdf", 
+       plot = Mapa_SigladoSHH, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Mapa SigladoT
+Mapa_SigladoGanadorT <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 7) +
+    geom_sf(data = HIDALGODF, aes(fill = SIGLADO_G), alpha = .9, color = "grey") +
+    geom_sf_label(data = HIDALGODF, aes(label = DISTRITO), size = 4, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("PRI" = "red", "PAN" = "blue", "PRD" = "#ffff00","MORENA"="#6F4E37", "PT" = "brown","PVEM"= "green", "MC"= "orange", "Sin Coalición" = "grey"), 
+                      name = "Partido que\nsiglará") +
+    labs(title = "¿Qué partido ganaría cada distrito en HIDALGO?",
+         subtitle = "Según el siglado y distritación 2024",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    theme(legend.position = "bottom",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_text(size = 12, color = "#014d64", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoGanadorT.pdf", 
+       plot = Mapa_SigladoGanadorT, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Lista de archivos PDF a combinar
+archivos <- c(
+    "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_resultados24.pdf",
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoFAM.pdf",
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoSHH.pdf",
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoGanadorT.pdf",
+    "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_Resultados.pdf",
+    "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_FAM.pdf",
+    "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_JHH.pdf",
+    "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_Diferencia.pdf"
+)
+
+# Directorio de salida para el archivo combinado
+archivo_salida <- "D:/52556/Documents/Distritos Federales 24/HIDALGO/HIDALGO_Consolidado.pdf"
+
+# Combina los archivos PDF en uno solo
+pdf_combine(archivos, output = archivo_salida)
