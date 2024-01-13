@@ -680,7 +680,7 @@ archivos <- c(
     "D:\\52556\\Documents\\Distritos Federales 24\\CAMPECHE\\Mapa_Cambios.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\CAMPECHE\\Mapa_participacion.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\CAMPECHE\\Mapa_listaN.pdf", 
-    "D:\\52556\\Documents\\Distritos Federales 24\\CAMPECHE\\Mapa_GenePrepo.pdf",
+    "D:\\52556\\Documents\\Distritos Federales 24\\CAMPECHE\\Mapa_GenePrepo.pdf"
 )
 
 # Directorio de salida para el archivo combinado
