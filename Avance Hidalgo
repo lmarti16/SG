@@ -663,13 +663,14 @@ ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_ContornoDL_D
 
 # Lista de archivos PDF a combinar
 archivos <- c(
-"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contorno_HIDALGO_DF1.pdf", 
-"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_ContornoDL_DF_1.pdf",  
-"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contornomun_DF_1.pdf", 
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Portada Hidalgo.pdf",
    "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_resultados24.pdf",
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoFAM.pdf",
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoSHH.pdf",
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoGanadorT.pdf",
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contorno_HIDALGO_DF1.pdf", 
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_ContornoDL_DF_1.pdf",  
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contornomun_DF_1.pdf", 
     "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_Resultados.pdf",
     "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_FAM.pdf",
     "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_JHH.pdf",
@@ -680,7 +681,8 @@ archivos <- c(
 "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_Cambios.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_participacion.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_listaN.pdf", 
-    "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_GenePrepo.pdf" 
+    "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_GenePrepo.pdf",
+"D:\52556\Documents\Distritos Federales 24\HIDALGO\Coaliciones (D1).pdf" 
 )
 
 
