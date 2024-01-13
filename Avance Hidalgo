@@ -682,9 +682,8 @@ archivos <- c(
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_participacion.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_listaN.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_GenePrepo.pdf",
-"D:\52556\Documents\Distritos Federales 24\HIDALGO\Coaliciones (D1).pdf" 
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Coaliciones (D1).pdf" 
 )
-
 
 # Directorio de salida para el archivo combinado
 archivo_salida <- "D:/52556/Documents/Distritos Federales 24/HIDALGO/HIDALGO_Consolidado.pdf"
