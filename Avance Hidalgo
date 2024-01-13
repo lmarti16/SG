@@ -15,10 +15,12 @@ library(pdftools)
 # Leer archivo SHP usando read_sf()
 Manzanas_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MANZANA.shp")
 Secciones_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\SECCION.shp")
-Municipios_HIDALGO_DF1 <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
+Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
 Secciones_switchers <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Secciones_switchers.csv")
 Lista_Nominal_Selected <- read_sf("D:\\52556\\Documents\\Nassar-oax\\Lista_Nominal_Selected.csv")
 Resultados <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Resultados_1821.csv")
+DISTRITOF_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_FEDERAL.shp")
+DISTRITOL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_LOCAL.shp")
 
 
 Resultados$SECCION <- as.numeric(Resultados$SECCION)
@@ -54,11 +56,10 @@ Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Lista_Nominal_Selected, by =
 
 Resultados_HIDALGO_DF1 <- filter(Resultados_HIDALGO, DISTRITO == 1)
 Secciones_HIDALGO_DF1 <- filter(Secciones_HIDALGO,  DISTRITO == 1)
-# Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_HIDALGO_DF1
-Municipios_DF1 <- unique(Secciones_HIDALGO_DF1$MUNICIPIO)
+DISTRITOF_HIDALGO_DF1 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 1)
+DistritoL_HIDALGO_DF1 <- st_intersection(DISTRITOF_HIDALGO_DF1, DISTRITOL_HIDALGO)
+Municipios_HIDALGO_DF1 <- st_intersection(DISTRITOF_HIDALGO_DF1, Municipios_HIDALGO)
 
-# Filtrar Municipios_HIDALGO_DF1
-Municipios_HIDALGO_DF1 <- Municipios_HIDALGO_DF1[Municipios_HIDALGO_DF1$MUNICIPIO %in% Municipios_DF1, ]
 
 Resultados_HIDALGO_DF1$SECCION <- as.numeric(Resultados_HIDALGO_DF1$SECCION)
 Resultados_HIDALGO_DF1$ENTIDAD <- as.numeric(Resultados_HIDALGO_DF1$ENTIDAD)
@@ -535,8 +536,7 @@ Mapa_Cambios <- ggplot() +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="purple" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green"), name = "Resultado electoral\n de la Manzana") +
     labs(title = "Secciones Electorales que cambiaron su voto\nen el Distrito Federal 1 de Hidalgo",
          subtitle = "Del 2018 a 2021 y el partido al que fue su voto",
-         caption = paste0("Elaborado por Qualia: Asesoría Especializada\n(Fuente: INEGI e INE/)\n",
-                          format(Sys.Date(), "%d/%m/%Y"))) +
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
     guides(fill = guide_legend(ncol = 2)) +
     theme(legend.position = "bottom",
@@ -553,13 +553,120 @@ Mapa_Cambios <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Proyecto F\\COYOACAN\\Mapa_Cambios.pdf", 
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_Cambios.pdf", 
        plot = Mapa_Cambios, 
        width = 8.5, height = 11, units = "in", device = "pdf")
 
+# Mapa de Contorno del universo
+mapa_Contorno_HIDALGO_DF1<- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 12) +
+    geom_sf(data = DISTRITOF_HIDALGO_DF1, aes(fill = "Distrito Federal 1"), color = "black", size = 0.1, alpha = .5) +
+    labs(title = "Contorno del Distrito Federal 1 de Hidalgo",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 2)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contorno_HIDALGO_DF1.pdf", 
+       plot = mapa_Contorno_HIDALGO_DF1, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+# Mapa de Contorno del universo
+mapa_Contorno_HIDALGO_DF1<- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 12) +
+    geom_sf(data = DISTRITOF_HIDALGO_DF1, aes(fill = "Distrito Federal 1"), color = "black", size = 0.1, alpha = .5) +
+    labs(title = "Contorno del Distrito Federal 1 de Hidalgo",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 2)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contorno_HIDALGO_DF1.pdf", 
+       plot = mapa_Contorno_HIDALGO_DF1, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+# Crear un mapa con colores únicos para cada municipio
+mapa_Contornomun_DF_1 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 12) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NOMBRE), color = "black", size = 0.1, alpha = 0.5) +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    labs(title = "Contorno Municipios del Distrito Federal 1",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 4)) +
+    theme(legend.position = "bottom",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contornomun_DF_1.pdf", 
+       plot = mapa_Contornomun_DF_1, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Crear un mapa con colores únicos para cada Distrito Local
+mapa_ContornoDL_DF_1 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 12) +
+    geom_sf(data = DistritoL_HIDALGO_DF1, aes(fill = DISTRITO_L), color = "black", size = 0.1, alpha = 0.5) +
+    geom_sf_label(data = DistritoL_HIDALGO_DF1, aes(label = DISTRITO_L), size = 5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    labs(title = "Contorno Municipios del Distrito Federal 1",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 4)) +
+    theme(legend.position = "bottom",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_ContornoDL_DF_1.pdf", 
+       plot = mapa_ContornoDL_DF_1, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+
 # Lista de archivos PDF a combinar
 archivos <- c(
-    "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_resultados24.pdf",
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contorno_HIDALGO_DF1.pdf", 
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_ContornoDL_DF_1.pdf",  
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\mapa_Contornomun_DF_1.pdf", 
+   "D:/52556/Documents/Distritos Federales 24/HIDALGO/Mapa_resultados24.pdf",
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoFAM.pdf",
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoSHH.pdf",
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_SigladoGanadorT.pdf",
@@ -570,7 +677,7 @@ archivos <- c(
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_Partidos18.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_Partidos21.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_switchers.pdf", 
-    "D:\\52556\\Documents\\Proyecto F\\COYOACAN\\Mapa_Cambios.pdf", 
+"D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_Cambios.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_participacion.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_listaN.pdf", 
     "D:\\52556\\Documents\\Distritos Federales 24\\HIDALGO\\Mapa_GenePrepo.pdf" 
