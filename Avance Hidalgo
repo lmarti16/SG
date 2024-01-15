@@ -21,7 +21,25 @@ Lista_Nominal_Selected <- read_sf("D:\\52556\\Documents\\Nassar-oax\\Lista_Nomin
 Resultados <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Resultados_1821.csv")
 DISTRITOF_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_FEDERAL.shp")
 DISTRITOL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_LOCAL.shp")
+mapa300_24 <- read_sf("D:\\52556\\Documents\\Distritos Federales 24\\mapa300_24.shp")
 
+
+
+# Nuevos nombres de columna
+nuevos_nombres <- c("ID", "ENTIDAD", "DISTRITO", "TIPO", "CONTROL", "GEOMETRY1_", "NOMBRE_ESTADO",
+                    "No_secciones", "No_Morena", "No_VPM", "No_Empate", "No_MC",
+                    "Suma_PAN", "Suma_PRI", "Suma_PRD", "Suma_PVEM", "Suma_PT", "Suma_MC",
+                    "Suma_MORENA", "Suma_PES", "Suma_RSP", "Suma_FXM", "Suma_CI",
+                    "Suma_PAN_PRI_PRD", "Suma_PAN_PRI", "Suma_PAN_PRD", "Suma_PRI_PRD",
+                    "Suma_PVEM_PT_MORENA", "Suma_PVEM_PT", "Suma_PVEM_MORENA", "Suma_PT_MORENA",
+                    "Suma_CANDIDATO_NO_REGISTRADO", "Suma_VOTOS_NULOS", "Suma_TOTAL_VOTOS_CALCULADOS",
+                    "Suma_LISTA_NOMINAL_CASILLA", "Suma_VaxMex_21", "Suma_Morena_21", "Suma_MC_21",
+                    "Suma_Otros_21", "Promedio_porcentaje_VPM", "Promedio_porcentaje_Morena",
+                    "Promedio_porcentaje_MC", "GANADOR", "Suma_Oposición", "GANADOR_Una_Oposicion",
+                    "SIGLADO_FAM", "SIGLADO_JHH", "SIGLADO_MC", "SIGLADO_G", "Ganador_Partido", "geometry")
+
+# Cambiar los nombres de columna
+colnames(mapa300_24) <- nuevos_nombres
 
 Resultados$SECCION <- as.numeric(Resultados$SECCION)
 Resultados$ENTIDAD <- as.numeric(Resultados$ENTIDAD)
@@ -106,7 +124,7 @@ Mapa_Resultados <- ggplot() +
     labs(title = "¿Dónde ganaría cada coalición en el\nDistrito Federal 1 de Hidalgo?",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
-    theme_economist_white(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
     guides(fill = guide_legend(ncol = 2)) +
     theme(legend.position = "bottom",
           legend.background = element_rect(fill = "#014d64"),
