@@ -23,7 +23,7 @@ Resultados <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Resultados_1821.csv")
 DISTRITOF_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_FEDERAL.shp")
 DISTRITOL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_LOCAL.shp")
 mapa300_24 <- read_sf("D:\\52556\\Documents\\Distritos Federales 24\\mapa300_24.shp")
-Resultados_gober1 <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober.csv")
+Resultados_gober <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober.csv")
 
 # Convert all columns to numeric
 Resultados_gober[, -c(3,4,28,31)] <- lapply(Resultados_gober[, -c(3,4,28,31)], as.numeric)
@@ -75,6 +75,8 @@ Resultados_HIDALGO <- filter(Resultados, ENTIDAD == 13)
 
 Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Secciones_switchers, by = c("SECCION","ENTIDAD"))
 Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Lista_Nominal_Selected, by = c("SECCION","ENTIDAD"))
+Resultados_HIDALGO <- left_join(Resultados_gober, Resultados_HIDALGO, by = c("SECCION","ENTIDAD"))
+
 
 Resultados_HIDALGO_DF1 <- filter(Resultados_HIDALGO, DISTRITO == 1)
 Secciones_HIDALGO_DF1 <- filter(Secciones_HIDALGO,  DISTRITO == 1)
