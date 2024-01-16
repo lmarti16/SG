@@ -23,17 +23,10 @@ Resultados <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Resultados_1821.csv")
 DISTRITOF_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_FEDERAL.shp")
 DISTRITOL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_LOCAL.shp")
 mapa300_24 <- read_sf("D:\\52556\\Documents\\Distritos Federales 24\\mapa300_24.shp")
-Resultados_gober <- read_sf("D:\\Descargas\\HGO_PEL_2022\\GUBERNATURA_csv\\2022_SEE_GOB_HGO_SEC.csv")
+Resultados_gober1 <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober.csv")
 
 # Convert all columns to numeric
-Resultados_gober[, -c(1, 3, 4, 5, 6, 7)] <- lapply(Resultados_gober[, -c(1, 3, 4, 5, 6, 7)], as.numeric)
-
-# Rename columns
-colnames(Resultados_gober)[colnames(Resultados_gober) == "MUNICIPIO"] <- "NO_Mun"
-colnames(Resultados_gober)[colnames(Resultados_gober) == "ID_ESTADO"] <- "ENTIDAD"
-colnames(Resultados_gober)[colnames(Resultados_gober) == "ID_MUNICIPIO"] <- "MUNICIPIO"
-colnames(Resultados_gober)[colnames(Resultados_gober) == "ID_DISTRITO_LOCAL"] <- "DISTRITO_L"
-
+Resultados_gober[, -c(3,4,28,31)] <- lapply(Resultados_gober[, -c(3,4,28,31)], as.numeric)
 
 
 # Nuevos nombres de columna
