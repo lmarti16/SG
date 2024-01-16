@@ -83,7 +83,7 @@ sankey <- sankeyNetwork(
 # Crear un HTML personalizado con título y subtítulo
 html_content <- '
 <div style="text-align: center; font-size: 18px; font-weight: bold;">Coalición ganadora por secciones electorales en el Estado de Hidalgo: De 2012 a 2022</div>
-<div style="text-align: center; font-size: 14px;">Elaborado por la Secretaría General del PRI Con datos de los Cómputos Distritales distritales 12 al 2022 para el Estado de Hidalgo</div>
+<div style="text-align: center; font-size: 14px;">Elaborado por la Secretaría General del PRI Con datos de los Cómputos Distritales distritales del 12 al 2022 para el Estado de Hidalgo</div>
 '
 # Agregar el contenido HTML al gráfico de Sankey
 sankey <- htmlwidgets::prependContent(sankey, HTML(html_content))
