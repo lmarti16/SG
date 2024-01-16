@@ -1,0 +1,91 @@
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(networkD3)
+library(htmltools)
+
+Secciones_switchersH <- Resultados_HIDALGO
+
+# Asegurarse de que las columnas de ganadores estén en formato de factor
+Secciones_switchersH$Ganador_12 <- as.factor(Secciones_switchersH$Ganador_12)
+Secciones_switchersH$Ganador_15 <- as.factor(Secciones_switchersH$Ganador_15)
+Secciones_switchersH$Ganador_18 <- as.factor(Secciones_switchersH$Ganador_18)
+Secciones_switchersH$Ganador_21 <- as.factor(Secciones_switchersH$Ganador_21)
+Secciones_switchersH$GANADO_G_22 <- as.factor(Secciones_switchersH$GANADO_G_22)
+# Crear una lista de nodos para las elecciones de 2012, 2015, 2018 y 2021
+nodos_12 <- as.factor(paste("2012", levels(Secciones_switchersH$Ganador_12), sep="_"))
+nodos_15 <- as.factor(paste("2015", levels(Secciones_switchersH$Ganador_15), sep="_"))
+nodos_18 <- as.factor(paste("2018", levels(Secciones_switchersH$Ganador_18), sep="_"))
+nodos_21 <- as.factor(paste("2021", levels(Secciones_switchersH$Ganador_21), sep="_"))
+nodos_23 <- as.factor(paste("2023", levels(Secciones_switchersH$GANADO_G_22), sep="_"))
+nodos <- unique(c(nodos_12, nodos_15, nodos_18, nodos_21,nodos_23))
+# Crear matrices de enlaces entre los nodos para 2012-2015, 2015-2018 y 2018-2021
+links_12_15 <- data.frame(
+    source = match(paste("2012", Secciones_switchersH$Ganador_12, sep="_"), nodos) - 1,
+    target = match(paste("2015", Secciones_switchersH$Ganador_15, sep="_"), nodos) - 1,
+    value = 1
+)
+links_15_18 <- data.frame(
+    source = match(paste("2015", Secciones_switchersH$Ganador_15, sep="_"), nodos) - 1,
+    target = match(paste("2018", Secciones_switchersH$Ganador_18, sep="_"), nodos) - 1,
+    value = 1
+)
+links_18_21 <- data.frame(
+    source = match(paste("2018", Secciones_switchersH$Ganador_18, sep="_"), nodos) - 1,
+    target = match(paste("2021", Secciones_switchersH$Ganador_21, sep="_"), nodos) - 1,
+    value = 1
+)
+links_21_23 <- data.frame(
+    source = match(paste("2021", Secciones_switchersH$Ganador_21, sep="_"), nodos) - 1,
+    target = match(paste("2023", Secciones_switchersH$GANADO_G_22, sep="_"), nodos) - 1,
+    value = 1
+)
+# Sumar los valores para obtener el peso total de los enlaces
+links_12_15 <- aggregate(value ~ source + target, data = links_12_15, sum)
+links_15_18 <- aggregate(value ~ source + target, data = links_15_18, sum)
+links_18_21 <- aggregate(value ~ source + target, data = links_18_21, sum)
+links_21_23 <- aggregate(value ~ source + target, data = links_21_23, sum)
+# Unir las matrices de enlaces
+links <- rbind(links_12_15, links_15_18, links_18_21,links_21_23)
+# Renombrar los nodos para eliminar los prefijos del año
+nodos <- gsub("2012_", "", nodos)
+nodos <- gsub("2015_", "", nodos)
+nodos <- gsub("2018_", "", nodos)
+nodos <- gsub("2021_", "", nodos)
+nodos <- gsub("2023_", "", nodos)
+# Definir los colores para los partidos
+colores_partidos <- c("MORENA" = "#8B4513", "PAN" = "darkblue", "PRI" = "red", "PRD" = "#FFFF66", "PVEM" = "#00FF7F", "MC" = "#FFA500","NVA_ALIANZA" = "cyan","PES" = "purple","PANALH" = "cyan","ES" = "purple")
+# Generar el Diagrama de Sankey con colores específicos y nodos más gruesos
+sankey <- sankeyNetwork(
+    Links = links,
+    Nodes = data.frame(name = nodos, group = nodos),
+    Source = "source",
+    Target = "target",
+    Value = "value",
+    NodeID = "name",
+    NodeGroup = "group",
+    colourScale = JS(paste0("d3.scaleOrdinal().domain(['", paste(names(colores_partidos), collapse="', '"), "']).range(['", paste(colores_partidos, collapse="', '"), "'])")),
+    nodeWidth = 60, # Ajustar el ancho de los nodos
+    fontSize = 14, # Ajustar el tamaño de la fuente
+    nodePadding = 15, # Ajustar el espacio entre los nodos
+    units = " Secciones Ganadas" # Unidades para el valor de los enlaces
+)
+# Crear un HTML personalizado con título y subtítulo
+html_content <- '
+<div style="text-align: center; font-size: 18px; font-weight: bold;">Coalición ganadora por secciones electorales en el Estado de Hidalgo: De 2012 a 2022</div>
+<div style="text-align: center; font-size: 14px;">Elaborado por la Secretaría General del PRI Con datos de los Cómputos Distritales distritales 12 al 2022 para el Estado de Hidalgo</div>
+'
+# Agregar el contenido HTML al gráfico de Sankey
+sankey <- htmlwidgets::prependContent(sankey, HTML(html_content))
+# Mostrar el diagrama
+sankey
