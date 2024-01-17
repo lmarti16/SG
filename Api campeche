@@ -116,8 +116,8 @@ Municipios_CAMPECHE_DF2 <- st_transform(Municipios_CAMPECHE_DF2, crs = 4326)
 
 # Definir los colores para cada nivel de competitividad
 colores_GANADOR_21 <- colorFactor(
-    palette = c("purple", "brown", "darkblue"), 
-    levels = c("Empate", "Juntos Hacemos Historia", "Frente Amplio por México")
+    palette = c("purple", "brown", "darkblue","orange"), 
+    levels = c("Empate", "Juntos Hacemos Historia", "Frente Amplio por México","Movimiento Ciudadano")
 )
 
 # Definir los colores para cada nivel de competitividad
