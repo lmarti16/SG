@@ -38,8 +38,10 @@ agregar_hoja("Participacion", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HI
 agregar_hoja("Lista_Nominal", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$quintilLN))
 agregar_hoja("Switchers21", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Switcher))
 agregar_hoja("Switchers22", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Switchers22))
+agregar_hoja("cambio partidos22",  table(Resultados_HIDALGO_DF1$NO_Mun,Resultados_HIDALGO_DF1$GANADO_G_22, Resultados_HIDALGO_DF1$Switchers22))
 agregar_hoja("Traidores", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Traidores))
 agregar_hoja("Gene_prepo", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Gene_prepo))
+
 
 # Guardar el libro de Excel
 saveWorkbook(wb, "Resultados_HIDALGO_DF1.xlsx", overwrite = TRUE)
