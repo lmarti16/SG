@@ -701,7 +701,6 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_participacion.pdf",
        plot = Mapa_participacion, 
        width = 8.5, height = 11, units = "in", device = "pdf")
 
-
 #Mapa Lista Nacional
 Mapa_listaN <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
@@ -766,11 +765,10 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Cambios.pdf",
        plot = Mapa_Cambios, 
        width = 8.5, height = 11, units = "in", device = "pdf")
 
-
 #Mapa Cambios22
 Mapa_Cambios22 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = ifelse(Switchers22 == "NO", GANADO_G_22, "white")), alpha = .7, color = "grey") +
+    geom_sf(data = mapaHIDALGO_DF1, aes(fill = ifelse(Switchers22 == "SI", GANADO_G_22, "white")), alpha = .7, color = "grey") +
     geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
