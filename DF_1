@@ -77,6 +77,26 @@ Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Secciones_switchers, by = c(
 Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Lista_Nominal_Selected, by = c("SECCION","ENTIDAD"))
 Resultados_HIDALGO <- left_join(Resultados_gober, Resultados_HIDALGO, by = c("SECCION","ENTIDAD"))
 
+# Crear la columna "Traidores"
+Resultados_HIDALGO$Traidores <- ifelse(
+  Resultados_HIDALGO$GANADO_G_22 == "PRI" &
+  Resultados_HIDALGO$Ganador_12 == "PRI" &
+  Resultados_HIDALGO$Ganador_15 == "PRI" &
+  Resultados_HIDALGO$Ganador_18 == "PRI" &
+  Resultados_HIDALGO$Ganador_21 == "PRI",
+  "Leales",
+  
+  ifelse(
+    Resultados_HIDALGO$GANADO_G_22 %in% c("MORENA", "PT", "PVEM", "PANALH") &
+    Resultados_HIDALGO$Ganador_12 == "PRI" &
+    Resultados_HIDALGO$Ganador_15 == "PRI" &
+    Resultados_HIDALGO$Ganador_18 == "PRI" &
+    Resultados_HIDALGO$Ganador_21 == "PRI",
+    "Traidores",
+    
+    "No aplica"
+  )
+)
 
 Resultados_HIDALGO_DF1 <- filter(Resultados_HIDALGO, DISTRITO == 1)
 Secciones_HIDALGO_DF1 <- filter(Secciones_HIDALGO,  DISTRITO == 1)
