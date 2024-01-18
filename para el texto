@@ -1,0 +1,10 @@
+sum(Resultados_HIDALGO_DF1$GEN_Z_M,na.rm = all())+sum(Resultados_HIDALGO_DF1$GEN_X_M,na.rm = all())+sum(Resultados_HIDALGO_DF1$MILLENNIALS_M,na.rm = all())+sum(Resultados_HIDALGO_DF1$BOOMERS_M,na.rm = all())+sum(Resultados_HIDALGO_DF1$SILENT_M,na.rm = all())
+
+
+sum(Resultados_HIDALGO_DF1$GEN_Z_H,na.rm = all())+sum(Resultados_HIDALGO_DF1$GEN_X_H,na.rm = all())+sum(Resultados_HIDALGO_DF1$MILLENNIALS_H,na.rm = all())+sum(Resultados_HIDALGO_DF1$BOOMERS_H,na.rm = all())+sum(Resultados_HIDALGO_DF1$SILENT_H,na.rm = all())
+
+sum(Resultados_HIDALGO_DF1$GEN_Z_TOTAL,na.rm = all())
+sum(Resultados_HIDALGO_DF1$GEN_x_TOTAL,na.rm = all())
+sum(Resultados_HIDALGO_DF1$MILLENNIALS_TOTAL,na.rm = all())
+sum(Resultados_HIDALGO_DF1$SILENT_TOTAL,na.rm = all())
+sum(Resultados_HIDALGO_DF1$BOOMERS_TOTAL,na.rm = all())
