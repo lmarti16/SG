@@ -58,7 +58,7 @@ Lista_Nominal_Selected$SECCION <- as.numeric(Lista_Nominal_Selected$SECCION)
 Lista_Nominal_Selected$ENTIDAD <- as.numeric(Lista_Nominal_Selected$ENTIDAD)
 Lista_Nominal_Selected$LISTA_NOMINAL <- as.numeric(Lista_Nominal_Selected$LISTA_NOMINAL)
 Resultados $porcentaje_VPM_21 <- as.numeric(Resultados $porcentaje_VPM_21)
-Resultados $porcentaje_JHH_21 <- as.numeric(Resultados $porcentaje_JHH_21)
+Resultados $porcentaje_SHH_22_21 <- as.numeric(Resultados $porcentaje_SHH_22_21)
 Resultados $porcentaje_MC_21 <- as.numeric(Resultados $porcentaje_MC_21)
 Resultados $SECCION <- as.numeric(Resultados $SECCION)
 Resultados $ENTIDAD <- as.numeric(Resultados $ENTIDAD)
@@ -127,6 +127,34 @@ Resultados_HIDALGO$GANADORG_C_22 <- recode(Resultados_HIDALGO$GANADORG_C_22,
                                         "MC" = "Movimiento Ciudadano",
                                         "EMPATE" = "Empate")
 
+Resultados_HIDALGO <- Resultados_HIDALGO %>%
+    mutate(across(-c(NO_Mun,
+                     CIRCUNSCRIPCION,
+                     NOMBRE_ESTADO,
+                     NOMBRE_ENTIDAD,
+                     Cambio_elector,
+                     Gene_prepo,
+                     GANADO_G_22,
+                     Ganador_Partido21,
+                     Ganador_Partido18,
+                     Ganador_18,
+                     Ganador_21,
+                     Switcher,
+                     Switcher_coalición,
+                     lealtad,
+                     lealtad15,
+                     switcher,
+                     Switchers22,
+                     Traidores,
+                     Ganador_12,
+                     Ganador_15,
+                     GANADORG_C_22,
+                     GANADOR_21,
+                     lealtad18,
+                     CABECERA_DISTRITAL_LOCAL), as.numeric, errors = "coerce"))
+
+
+
 Resultados_HIDALGO_DF1 <- filter(Resultados_HIDALGO, DISTRITO == 1)
 Secciones_HIDALGO_DF1 <- filter(Secciones_HIDALGO,  DISTRITO == 1)
 DISTRITOF_HIDALGO_DF1 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 1)
@@ -138,7 +166,7 @@ DistritoL_HIDALGO_DF1 <- DistritoL_HIDALGO_DF1[st_geometry_type(DistritoL_HIDALG
 # Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_SONORA_DF2
 Municipios_DF1 <- unique(Secciones_HIDALGO_DF1$MUNICIPIO)
 
-# Filtrar Municipios_SONORA
+# Filtrar Municipios_Hidalgo
 Municipios_HIDALGO_DF1 <- Municipios_HIDALGO[Municipios_HIDALGO$MUNICIPIO %in% Municipios_DF1, ]
 
 
@@ -937,3 +965,287 @@ archivo_salida <- "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\HIDALGO_Consol
 
 # Combina los archivos PDF en uno solo
 pdf_combine(archivos, output = archivo_salida)
+
+
+
+#Regresiones 
+
+#Participacion-FAM
+regression_ParticipacionF <- lm(participacion ~porcentaje_FAM_22, data = Resultados_HIDALGO_DF1)
+summary(regression_ParticipacionF )
+
+ggplot(Resultados_HIDALGO_DF1, aes(x = participacion, y = porcentaje_FAM_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(title = "A más participación, más votos por Fuerza y Corazón por México",
+         subtitle = "Regresión lineal entre el voto por Fuerza & Corazón por México y la participación electoral",
+         x= "Porcentaje de Participación electoral en la sección electoral",
+         y = "Votos por los partidos deFuerza & Corazón por México (%) en la sección",
+         caption = "Elaboración propia con datos de los recuentos distritales para Hidalgo en 2022") +
+    theme_stata()
+
+
+# Regresiones lineales
+regression_GEN_Z_Participacion <- lm(participacion ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_MILLENNIALS_Participacion  <- lm(participacion ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_GEN_X_Participacion  <- lm(participacion ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_BOOMERS_Participacion  <- lm(participacion ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_SILENT_Participacion  <- lm(participacion ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Resumen de las regresiones
+summary(regression_GEN_Z_Participacion )
+summary(regression_MILLENNIALS_Participacion )
+summary(regression_GEN_X_Participacion )
+summary(regression_BOOMERS_Participacion )
+summary(regression_SILENT_Participacion )
+
+# Gráficos individuales
+plot_GEN_Z_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = participacion)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Participación electoral y los electores más jóvenes",
+         x= "Electores Gen Z (18-24 años)",
+         y = "Participación electoral(%)") +
+    theme_stata()
+
+plot_MILLENNIALS_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = participacion)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Participación electoral y los electores Millennials",
+         x= "Electores Millennials (25-39 años)",
+         y = "Participación electoral(%)") +
+    theme_stata()
+
+plot_GEN_X_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOTAL_PORCENTAJE, y = participacion)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Participación electoral y los electores Gen X",
+         x= "Electores Gen X (40-54 años)",
+         y = "Participación electoral(%)") +
+    theme_stata()
+
+plot_BOOMERS_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = participacion)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Participación electoral y los electores Boomers",
+         x= "Electores Boomers (55-65 años)",
+         y = "Participación electoral(%)") +
+    theme_stata()
+
+plot_SILENT_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = SILENT_TOTAL_PORCENTAJE, y = participacion)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Participación electoral y los electores Adultos Mayores",
+         x= "Electorado mayor de 65 años",
+         y = "Participación electoral(%)") +
+    theme_stata()
+
+# Crear el sexto gráfico vacío con el color de fondo deseado
+plot_SEXTO <- ggplot() +
+    labs(title = "\n \n  \n  \n \nElaborado por la Secretaría General del CEN del PRI  \nCon Datos de los recuentos distritales 2022 para Hidalgo",
+         x = "",
+         y = "") +
+    theme_stata() +
+    theme(plot.background = element_rect(fill = "#EAF2F3"), panel.background = element_rect(fill = "#EAF2F3"), axis.line.x = element_blank(), panel.border = element_blank())  # Color de fondo
+
+# Agregar el sexto gráfico vacío al conjunto combinado
+combined_plots_participacion <- plot_grid(
+    plot_GEN_Z_participacion, plot_MILLENNIALS_participacion, 
+    plot_GEN_X_participacion, plot_BOOMERS_participacion, 
+    plot_SILENT_participacion,
+    plot_SEXTO,  # Agregar el sexto gráfico vacío aquí
+    ncol = 2, nrow = 3, 
+    rel_heights = c(1, 1, 1, 1),  # Ajustar las alturas de las filas
+    align = "v",
+    expand = c(0, 0, 0, 0)  # Ajustar los márgenes superior, derecho, inferior, izquierdo
+) +
+    labs(title = "Relación de los segmentos generacionales con la Participación Electoral") +
+    theme_stata() +
+    theme(plot.background = element_rect(fill = "#EAF2F3"))  # Color de fondo para todo el conjunto
+
+# Mostrar el conjunto combinado
+print(combined_plots_participacion)
+
+
+
+# Regresión con GEN_Z_TOTAL_PORCENTAJE y porcentaje_FAM_22
+regression_GEN_Z_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Regresión con MILLENNIALS_TOTAL_PORCENTAJE y porcentaje_FAM_22
+regression_MILLENNIALS_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Regresión con GEN_X_TOTAL_PORCENTAJE y porcentaje_FAM_22
+regression_GEN_X_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Regresión con BOOMERS_TOTAL_PORCENTAJE y porcentaje_FAM_22
+regression_BOOMERS_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Regresión con SILENT_TOTAL_PORCENTAJE y porcentaje_FAM_22
+regression_SILENT_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+# Resumen de las regresiones
+summary(regression_GEN_Z_porcentaje_FAM_22)
+summary(regression_MILLENNIALS_porcentaje_FAM_22)
+summary(regression_GEN_X_porcentaje_FAM_22)
+summary(regression_BOOMERS_porcentaje_FAM_22)
+summary(regression_SILENT_porcentaje_FAM_22)
+
+# Gráficos individuales
+plot_GEN_Z_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores más jóvenes",
+         x= "Electores Gen Z (18-24 años)",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+plot_MILLENNIALS_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores Millennials",
+         x= "Electores Millennials (25-39 años)",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+plot_GEN_X_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores Gen X",
+         x= "Electores Gen X (40-54 años)",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+plot_BOOMERS_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores Boomers",
+         x= "Electores Boomers (55-65 años)",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+plot_SILENT_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = SILENT_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores Adultos Mayores",
+         x= "Electorado mayor de 65 años",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+# Crear el sexto gráfico vacío con el color de fondo deseado
+plot_SEXTO <- ggplot() +
+    labs(title = "\n \n  \n  \n \nElaborado por la Secretaría General del CEN del PRI  \nCon Datos de los recuentos distritales 2022 para Hidalgo",
+         x = "",
+         y = "") +
+    theme_stata() +
+    theme(plot.background = element_rect(fill = "#EAF2F3"), panel.background = element_rect(fill = "#EAF2F3"), axis.line.x = element_blank(), panel.border = element_blank())  # Color de fondo
+
+# Agregar el sexto gráfico vacío al conjunto combinado
+combined_plots_porcentaje_FAM_22 <- plot_grid(
+    plot_GEN_Z_porcentaje_FAM_22, plot_MILLENNIALS_porcentaje_FAM_22, 
+    plot_GEN_X_porcentaje_FAM_22, plot_BOOMERS_porcentaje_FAM_22, 
+    plot_SILENT_porcentaje_FAM_22,
+    plot_SEXTO,  # Agregar el sexto gráfico vacío aquí
+    ncol = 2, nrow = 3, 
+    rel_heights = c(1, 1, 1, 1),  # Ajustar las alturas de las filas
+    align = "v",
+    expand = c(0, 0, 0, 0)  # Ajustar los márgenes superior, derecho, inferior, izquierdo
+) +
+    labs(title = "Relación de los segmentos generacionales con el voto por la coalición Fuerza y corazón por México.") +
+    theme_stata() +
+    theme(plot.background = element_rect(fill = "#EAF2F3"))  # Color de fondo para todo el conjunto
+
+# Mostrar el conjunto combinado
+print(combined_plots_porcentaje_FAM_22)
+
+
+
+
+# Regresión con GEN_Z_TOTAL_PORCENTAJE y porcentaje_SHH_22
+regression_GEN_Z_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Regresión con MILLENNIALS_TOTAL_PORCENTAJE y porcentaje_SHH_22
+regression_MILLENNIALS_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Regresión con GEN_X_TOTAL_PORCENTAJE y porcentaje_SHH_22
+regression_GEN_X_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Regresión con BOOMERS_TOTAL_PORCENTAJE y porcentaje_SHH_22
+regression_BOOMERS_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Regresión con SILENT_TOTAL_PORCENTAJE y porcentaje_SHH_22
+regression_SILENT_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+
+# Resumen de las regresiones
+summary(regression_GEN_Z_porcentaje_SHH_22)
+summary(regression_MILLENNIALS_porcentaje_SHH_22)
+summary(regression_GEN_X_porcentaje_SHH_22)
+summary(regression_BOOMERS_porcentaje_SHH_22)
+summary(regression_SILENT_porcentaje_SHH_22)
+
+# Gráficos individuales
+plot_GEN_Z_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores más jóvenes",
+         x= "Electores Gen Z (18-24 años)",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+plot_MILLENNIALS_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores Millennials",
+         x= "Electores Millennials (25-39 años)",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+plot_GEN_X_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores Gen X",
+         x= "Electores Gen X (40-54 años)",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+plot_BOOMERS_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores Boomers",
+         x= "Electores Boomers (55-65 años)",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+plot_SILENT_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = SILENT_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+    geom_point() +
+    geom_smooth(method = "lm", se = FALSE) +
+    labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores Adultos Mayores",
+         x= "Electorado mayor de 65 años",
+         y = "Votos por los partidos de\nFuerza & Corazón por México") +
+    theme_stata()
+
+# Crear el sexto gráfico vacío con el color de fondo deseado
+plot_SEXTO <- ggplot() +
+    labs(title = "\n \n  \n  \n \nElaborado por la Secretaría General del CEN del PRI  \nCon Datos de los recuentos distritales 2022 para Hidalgo",
+         x = "",
+         y = "") +
+    theme_stata() +
+    theme(plot.background = element_rect(fill = "#EAF2F3"), panel.background = element_rect(fill = "#EAF2F3"), axis.line.x = element_blank(), panel.border = element_blank())  # Color de fondo
+
+# Agregar el sexto gráfico vacío al conjunto combinado
+combined_plots_porcentaje_SHH_22 <- plot_grid(
+    plot_GEN_Z_porcentaje_SHH_22, plot_MILLENNIALS_porcentaje_FAM_22, 
+    plot_GEN_X_porcentaje_SHH_22, plot_BOOMERS_porcentaje_FAM_22, 
+    plot_SILENT_porcentaje_SHH_22,
+    plot_SEXTO,  # Agregar el sexto gráfico vacío aquí
+    ncol = 2, nrow = 3, 
+    rel_heights = c(1, 1, 1, 1),  # Ajustar las alturas de las filas
+    align = "v",
+    expand = c(0, 0, 0, 0)  # Ajustar los márgenes superior, derecho, inferior, izquierdo
+) +
+    labs(title = "Relación de los segmentos generacionales con el voto por la coalición Sigamos Haciendo Historia") +
+    theme_stata() +
+    theme(plot.background = element_rect(fill = "#EAF2F3"))  # Color de fondo para todo el conjunto
+
+# Mostrar el conjunto combinado
+print(combined_plots_porcentaje_SHH_22)
+
+
