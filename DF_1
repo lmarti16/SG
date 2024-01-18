@@ -490,6 +490,38 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_GenePrepo.pdf",
        plot = Mapa_GenePrepo, 
        width = 8.5, height = 11, units = "in", device = "pdf")
 
+#Mapa Partidos22
+Mapa_Partidos22 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = mapaHIDALGO_DF1, aes(fill = GANADO_G_22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="purple" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green"), name = "Resultado electoral\n de la Manzana") +
+    labs(title = "¿Qué Partido ganó en 2022 en el\nDistrito Federal 1 de Hidalgo?",
+         subtitle = "Por sección electoraly sin coalición",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 2)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos22.pdf", 
+       plot = Mapa_Partidos22, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
 #Mapa Partidos21
 Mapa_Partidos21 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
@@ -500,7 +532,7 @@ Mapa_Partidos21 <- ggplot() +
     geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="purple" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green"), name = "Resultado electoral\n de la Manzana") +
     labs(title = "¿Qué Partido ganó en 2021 en el\nDistrito Federal 1 de Hidalgo?",
-         subtitle = "Por manzanas habitadas y sin coalición",
+         subtitle = "Por sección electoraly sin coalición",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
     guides(fill = guide_legend(ncol = 2)) +
@@ -532,7 +564,7 @@ Mapa_Partidos18 <- ggplot() +
     geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="purple" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green"), name = "Resultado electoral\n de la Manzana") +
     labs(title = "¿Qué Partido ganó en 2018 en el\nDistrito Federal 1 de Hidalgo?",
-         subtitle = "Por manzanas habitadas y sin coalición",
+         subtitle = "Por sección electoraly sin coalición",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
     guides(fill = guide_legend(ncol = 2)) +
@@ -770,6 +802,7 @@ archivos <- c(
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Diferencia.pdf",
      "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos18.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos21.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos22.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_switchers.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Cambios.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\traidores_Hidalgo.pdf", 
