@@ -190,16 +190,26 @@ Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>%
 quintilesF <- quantile(Resultados_HIDALGO_DF1$porcentaje_FAM_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
 quintilesM <- quantile(Resultados_HIDALGO_DF1$porcentaje_SHH_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
 quintilesD <- quantile(Resultados_HIDALGO_DF1$diferencia, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
-quintilesparti<- quantile(Resultados_HIDALGO_DF1$participacion, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
-quintilesLN<- quantile(Resultados_HIDALGO_DF1$LISTA_NOMINAL_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesparti <- quantile(Resultados_HIDALGO_DF1$participacion, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesLN <- quantile(Resultados_HIDALGO_DF1$LISTA_NOMINAL, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
 
+# Definir etiquetas personalizadas
+labels_custom <- function(breaks) {
+  n <- length(breaks) - 1
+  labels <- character(n)
+  for (i in 1:n) {
+    labels[i] <- paste0("(", floor(breaks[i]), ", ", floor(breaks[i + 1]), "]")
+  }
+  return(labels)
+}
 
-# Agrega columna con quintiles
-Resultados_HIDALGO_DF1$quintilF <- cut(Resultados_HIDALGO_DF1$porcentaje_FAM_22, breaks = quintilesF, include.lowest = TRUE)
-Resultados_HIDALGO_DF1$quintilM <- cut(Resultados_HIDALGO_DF1$porcentaje_SHH_22, breaks = quintilesM, include.lowest = TRUE)
-Resultados_HIDALGO_DF1$quintilD <- cut(Resultados_HIDALGO_DF1$diferencia, breaks = quintilesD, include.lowest = TRUE)
-Resultados_HIDALGO_DF1$quintilparti <- cut(Resultados_HIDALGO_DF1$participacion, breaks = quintilesparti, include.lowest = TRUE)
-Resultados_HIDALGO_DF1$quintilLN <- cut(Resultados_HIDALGO_DF1$LISTA_NOMINAL_22, breaks = quintilesLN, include.lowest = TRUE)
+# Agrega columna con quintiles y etiquetas personalizadas
+Resultados_HIDALGO_DF1$quintilF <- cut(Resultados_HIDALGO_DF1$porcentaje_FAM_22, breaks = quintilesF, include.lowest = TRUE, labels = labels_custom(quintilesF))
+Resultados_HIDALGO_DF1$quintilM <- cut(Resultados_HIDALGO_DF1$porcentaje_SHH_22, breaks = quintilesM, include.lowest = TRUE, labels = labels_custom(quintilesM))
+Resultados_HIDALGO_DF1$quintilD <- cut(Resultados_HIDALGO_DF1$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
+Resultados_HIDALGO_DF1$quintilparti <- cut(Resultados_HIDALGO_DF1$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
+Resultados_HIDALGO_DF1$quintilLN <- cut(Resultados_HIDALGO_DF1$LISTA_NOMINAL, breaks = quintilesLN, include.lowest = TRUE, labels = labels_custom(quintilesLN))
+
 
 
 Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
