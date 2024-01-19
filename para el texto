@@ -45,3 +45,26 @@ agregar_hoja("Gene_prepo", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDAL
 
 # Guardar el libro de Excel
 saveWorkbook(wb, "Resultados_HIDALGO_DF1.xlsx", overwrite = TRUE)
+
+
+
+
+
+# Crear el DataFrame Resultados_mun
+Resultados_mun <- Resultados_HIDALGO %>%
+    group_by(MUNICIPIO) %>%
+    summarise(
+        Num_Observaciones = n(),
+        Empate = sum(GANADORG_C_22 == "Empate"),
+        Fuerza_y_Corazon_por_Mexico = sum(GANADORG_C_22 == "Fuerza y Corazón por México"),
+        Seguimos_Haciendo_Historia = sum(GANADORG_C_22 == "Seguimos Haciendo Historia"),
+        MORENA = sum(GANADO_G_22 == "MORENA"),
+        PAN = sum(GANADO_G_22 == "PAN"),
+        PANALH = sum(GANADO_G_22 == "PANALH"),
+        PRD = sum(GANADO_G_22 == "PRD"),
+        PRI = sum(GANADO_G_22 == "PRI"),
+        PT = sum(GANADO_G_22 == "PT")
+    )
+
+# Visualizar la estructura del nuevo DataFrame
+str(Resultados_mun)
