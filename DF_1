@@ -61,23 +61,6 @@ Secciones_switchers$SECCION <- as.numeric(Secciones_switchers$SECCION)
 Secciones_switchers$ENTIDAD <- as.numeric(Secciones_switchers$ENTIDAD)
 Lista_Nominal_Selected$SECCION <- as.numeric(Lista_Nominal_Selected$SECCION)
 Lista_Nominal_Selected$ENTIDAD <- as.numeric(Lista_Nominal_Selected$ENTIDAD)
-Lista_Nominal_Selected$LISTA_NOMINAL <- as.numeric(Lista_Nominal_Selected$LISTA_NOMINAL)
-Resultados $porcentaje_VPM_21 <- as.numeric(Resultados $porcentaje_VPM_21)
-Resultados $porcentaje_JHH_21 <- as.numeric(Resultados $porcentaje_JHH_21)
-Resultados $porcentaje_MC_21 <- as.numeric(Resultados $porcentaje_MC_21)
-Resultados $SECCION <- as.numeric(Resultados $SECCION)
-Resultados $ENTIDAD <- as.numeric(Resultados $ENTIDAD)
-Resultados $VOTOS_NULOS_21 <- as.numeric(Resultados $VOTOS_NULOS_21)
-Resultados $TOTAL_VOTOS_CALCULADOS_21 <- as.numeric(Resultados $TOTAL_VOTOS_CALCULADOS_21)
-Resultados $LISTA_NOMINAL_CASILLA_21 <- as.numeric(Resultados $LISTA_NOMINAL_CASILLA_21)
-Resultados $VaxMex_21 <- as.numeric(Resultados $VaxMex_21)
-Resultados $JHH_21 <- as.numeric(Resultados $JHH_21)
-Resultados $MC_21 <- as.numeric(Resultados $MC_21)
-Resultados $PAN_21 <- as.numeric(Resultados $PAN_21)
-Resultados $PRI_21 <- as.numeric(Resultados $PRI_21)
-Resultados $MORENA_21 <- as.numeric(Resultados $MORENA_21)
-Lista_Nominal_Selected $SECCION <- as.numeric(Lista_Nominal_Selected $SECCION)
-Lista_Nominal_Selected $ENTIDAD <- as.numeric(Lista_Nominal_Selected $ENTIDAD)
 
 Resultados_HIDALGO <- filter(Resultados, ENTIDAD == 13)
 
@@ -159,7 +142,6 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
                      CABECERA_DISTRITAL_LOCAL), as.numeric, errors = "coerce"))
 
 
-
 Resultados_HIDALGO_DF1 <- filter(Resultados_HIDALGO, DISTRITO == 1)
 Secciones_HIDALGO_DF1 <- filter(Secciones_HIDALGO,  DISTRITO == 1)
 DISTRITOF_HIDALGO_DF1 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 1)
@@ -214,8 +196,6 @@ Resultados_HIDALGO_DF1$quintilM <- cut(Resultados_HIDALGO_DF1$porcentaje_SHH_22,
 Resultados_HIDALGO_DF1$quintilD <- cut(Resultados_HIDALGO_DF1$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
 Resultados_HIDALGO_DF1$quintilparti <- cut(Resultados_HIDALGO_DF1$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
 Resultados_HIDALGO_DF1$quintilLN <- cut(Resultados_HIDALGO_DF1$LISTA_NOMINAL, breaks = quintilesLN, include.lowest = TRUE, labels = labels_custom(quintilesLN))
-
-
 
 Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
 
@@ -982,7 +962,6 @@ archivo_salida <- "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\HIDALGO_Consol
 pdf_combine(archivos, output = archivo_salida)
 
 
-
 #Regresiones 
 
 #Participacion-FAM
@@ -1263,8 +1242,3 @@ combined_plots_porcentaje_SHH_22 <- plot_grid(
 
 # Mostrar el conjunto combinado
 print(combined_plots_porcentaje_SHH_22)
-
-
-
-
-
