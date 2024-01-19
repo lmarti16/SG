@@ -49,6 +49,7 @@ saveWorkbook(wb, "Resultados_HIDALGO_DF1.xlsx", overwrite = TRUE)
 
 
 
+Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
 
 # Crear el DataFrame Resultados_mun
 Resultados_mun <- Resultados_HIDALGO %>%
@@ -63,8 +64,159 @@ Resultados_mun <- Resultados_HIDALGO %>%
         PANALH = sum(GANADO_G_22 == "PANALH"),
         PRD = sum(GANADO_G_22 == "PRD"),
         PRI = sum(GANADO_G_22 == "PRI"),
-        PT = sum(GANADO_G_22 == "PT")
+        PT = sum(GANADO_G_22 == "PT"),
+        Empate21 = sum(GANADOR_21 == "Empate"),
+        Fuerza_y_Corazon_por_Mexico21 = sum(GANADOR_21 == "Fuerza y Corazón por México"),
+        Seguimos_Haciendo_Historia21 = sum(GANADOR_21 == "Seguimos Haciendo Historia"),
+        MORENA21 = sum(Ganador_Partido21 == "MORENA"),
+        PAN21 = sum(Ganador_Partido21 == "PAN"),
+        PES = sum(Ganador_Partido21 == "PES"),
+        PRD21 = sum(Ganador_Partido21 == "PRD"),
+        PRI21 = sum(Ganador_Partido21 == "PRI"),
+        PVEM21 = sum(Ganador_Partido21 == "PVEM")
     )
 
-# Visualizar la estructura del nuevo DataFrame
-str(Resultados_mun)
+mapaHIDALGO <- left_join(Secciones_HIDALGO, Resultados_HIDALGO, by = c("SECCION", "ENTIDAD"))
+Municipios_HIDALGO  <- left_join(Municipios_HIDALGO, Resultados_mun, by = c("MUNICIPIO"))
+
+MapaH_ResultadosG21 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 9) +
+    geom_sf(data = mapaHIDALGO, aes(fill = GANADOR_21), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = subset(Municipios_HIDALGO, Fuerza_y_Corazon_por_Mexico21> 0),
+                  aes(label = NOMBRE),
+                  size = 2, fill = "white", color = "black", alpha = 0, label.size = NA) +
+    scale_fill_manual(values = c("Seguimos Haciendo Historia" = "white", "Fuerza y Corazón por México" = "red", "Movimiento Ciudadano" = "white", "Empate" = "white", "NA"="white" ), name = "Resultado electoral\n de la sección") +
+    labs(title = "¿Dónde ganamos con la coalición en Hidalgo?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "Null",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 27, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
+
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\MapaH_ResultadosG21.pdf",
+plot = MapaH_ResultadosG21,
+width = 8.5, height = 11, units = "in", device = "pdf")
+
+MapaH_ResultadosGS21 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 9) +
+    geom_sf(data = mapaHIDALGO, aes(fill = Ganador_Partido21), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = subset(Municipios_HIDALGO, PRI21 > 0),
+                  aes(label = NOMBRE),
+                  size = 2, fill = "white", color = "black", alpha = 0, label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "white", "PRI" = "red","PAN" ="white", "MC" = "white", "Empate" ="white" , "PRD" ="white","NUEVA_ALIANZA" = "white", "PES" ="white", PT = "white", "PVEM" = "white", "PANALH" = "white", "ES" = "white", "NVA_ALIANZA" = "white"), name = "Resultado electoral\n de la Manzana") +
+    labs(title = "¿Dónde ganamos solos en Hidalgo?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "Null",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 27, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
+
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\MapaH_ResultadosGS21.pdf",
+plot = MapaH_ResultadosGS21,
+width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+MapaH_ResultadosGS <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 9) +
+    geom_sf(data = mapaHIDALGO, aes(fill = GANADO_G_22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = subset(Municipios_HIDALGO, PRI21 > 0),
+                  aes(label = NOMBRE),
+                  size = 2, fill = "white", color = "black", alpha = 0, label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "white", "PRI" = "red","PAN" ="white", "MC" = "white", "Empate" ="white" , "PRD" ="white","NUEVA_ALIANZA" = "white", "PES" ="white", PT = "white", "PVEM" = "white", "PANALH" = "white", "ES" = "white", "NVA_ALIANZA" = "white"), name = "Resultado electoral\n de la Manzana") +
+    labs(title = "¿Dónde ganamos solos en Hidalgo?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + 
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "Null",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 27, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
+
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\MapaH_ResultadosGS.pdf", 
+       plot = MapaH_ResultadosGS, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+MapaH_ResultadosG <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 9) +
+    geom_sf(data = mapaHIDALGO, aes(fill = GANADORG_C_22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = subset(Municipios_HIDALGO, Fuerza_y_Corazon_por_Mexico > 0), 
+                  aes(label = NOMBRE), 
+                  size = 2, fill = "white", color = "black", alpha = 0, label.size = NA) +
+    scale_fill_manual(values = c("Seguimos Haciendo Historia" = "white", "Fuerza y Corazón por México" = "red", "Movimiento Ciudadano" = "white", "Empate" = "white", "NA"="white" ), name = "Resultado electoral\n de la sección") +
+    labs(title = "¿Dónde ganamos con la coalición en Hidalgo?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + 
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "Null",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 27, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
+
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\MapaH_ResultadosG.pdf", 
+       plot = MapaH_ResultadosG, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Lista de archivos PDF a combinar
+archivos <- c(
+"D:\\52556\\Documents\\Secretaria_GralPRI\\MapaH_ResultadosG.pdf", 
+"D:\\52556\\Documents\\Secretaria_GralPRI\\MapaH_ResultadosGS.pdf", 
+"D:\\52556\\Documents\\Secretaria_GralPRI\\MapaH_ResultadosG21.pdf",
+"D:\\52556\\Documents\\Secretaria_GralPRI\\MapaH_ResultadosGS21.pdf"
+)
+# Directorio de salida para el archivo combinado
+archivo_salida <- "D:\\52556\\Documents\\Secretaria_GralPRI\\HIDALGO_comparado.pdf"
+# Combina los archivos PDF en uno solo
+pdf_combine(archivos, output = archivo_salida)
