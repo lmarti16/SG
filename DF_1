@@ -34,6 +34,11 @@ Municipios_HIDALGO$NOMBRE <- str_replace_all(Municipios_HIDALGO$NOMBRE, " ", "\n
 # Convert all columns to numeric
 Resultados_gober[, -c(3,4,28,31)] <- lapply(Resultados_gober[, -c(3,4,28,31)], as.numeric)
 
+Resultados_gober <- Resultados_gober %>% 
+    mutate( FAM_G_22 = (FAM_G_22 +PAN_PRI_PRD_22))
+Resultados_gober$GANADORG_C_22 <- ifelse(Resultados_gober$FAM_G_22 > Resultados_gober$SHH_G_22, "FAM_G", ifelse(Resultados_gober$SHH_G_22 > Resultados_gober$FAM_G_22, "SHH_G", "EMPATE"))
+
+
 # Nuevos nombres de columna
 nuevos_nombres <- c("ID", "ENTIDAD", "DISTRITO", "TIPO", "CONTROL", "GEOMETRY1_", "NOMBRE_ESTADO",
                     "No_secciones", "No_Morena", "No_VPM", "No_Empate", "No_MC",
@@ -58,7 +63,7 @@ Lista_Nominal_Selected$SECCION <- as.numeric(Lista_Nominal_Selected$SECCION)
 Lista_Nominal_Selected$ENTIDAD <- as.numeric(Lista_Nominal_Selected$ENTIDAD)
 Lista_Nominal_Selected$LISTA_NOMINAL <- as.numeric(Lista_Nominal_Selected$LISTA_NOMINAL)
 Resultados $porcentaje_VPM_21 <- as.numeric(Resultados $porcentaje_VPM_21)
-Resultados $porcentaje_SHH_22_21 <- as.numeric(Resultados $porcentaje_SHH_22_21)
+Resultados $porcentaje_JHH_21 <- as.numeric(Resultados $porcentaje_JHH_21)
 Resultados $porcentaje_MC_21 <- as.numeric(Resultados $porcentaje_MC_21)
 Resultados $SECCION <- as.numeric(Resultados $SECCION)
 Resultados $ENTIDAD <- as.numeric(Resultados $ENTIDAD)
