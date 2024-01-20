@@ -75,7 +75,7 @@ Resultados_mun <- Resultados_HIDALGO %>%
         VPT = sum(PT_22),
         Empate21 = sum(GANADOR_21 == "Empate"),
         Fuerza_y_Corazon_por_Mexico21 = sum(GANADOR_21 == "Fuerza y Corazón por México"),
-        VFAM21 = sum(VaxMex_21),
+        VFCM21 = sum(VaxMex_21),
         Seguimos_Haciendo_Historia21 = sum(GANADOR_21 == "Seguimos Haciendo Historia"),
         VSHH21 = sum(JHH_21),
         MORENA21 = sum(Ganador_Partido21 == "MORENA"),
@@ -92,8 +92,34 @@ Resultados_mun <- Resultados_HIDALGO %>%
         VPVEM21 = sum(PVEM_21)
     )
 
-mapaHIDALGO <- left_join(Secciones_HIDALGO, Resultados_HIDALGO, by = c("SECCION", "ENTIDAD"))
+# Crear las columnas de ganadores
+Resultados_mun$Ganador_C22 <- ifelse(
+    Resultados_mun$VFCM >  Resultados_mun$VSHH,
+    "Fuerza y Corazón por México",    
+    "Seguimos Haciendo Historia"
+)
+
+Resultados_mun$Ganador_S22 <- ifelse(
+    Resultados_mun$VPRI >  Resultados_mun$VSHH,
+    "PRI",    
+    "Seguimos Haciendo Historia"
+)
+Resultados_mun$Ganador_C21 <- ifelse(
+    Resultados_mun$VFCM21 >  Resultados_mun$VSHH21,
+    "Fuerza y Corazón por México",    
+    "Seguimos Haciendo Historia"
+)
+
+Resultados_mun$Ganador_S21 <- ifelse(
+    Resultados_mun$VPRI21 >  Resultados_mun$VSHH21,
+    "PRI",    
+    "Seguimos Haciendo Historia"
+)
+
 Municipios_HIDALGO  <- left_join(Municipios_HIDALGO, Resultados_mun, by = c("MUNICIPIO"))
+
+mapaHIDALGO <- left_join(Secciones_HIDALGO, Resultados_HIDALGO, by = c("SECCION", "ENTIDAD"))
+
 
 MapaH_ResultadosG21 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 9) +
