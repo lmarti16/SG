@@ -31,6 +31,10 @@ Resultados_gober <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultado
 # Reemplaza los espacios por saltos de línea en la columna NOMBRE
 Municipios_HIDALGO$NOMBRE <- str_replace_all(Municipios_HIDALGO$NOMBRE, " ", "\n")
 
+# Suponiendo que tu dataframe se llama 'Municipios_HIDALGO'
+Municipios_HIDALGO <- Municipios_HIDALGO %>%
+  mutate(NOMBRE = paste0(tools::toTitleCase(tolower(NOMBRE))))
+
 # Convert all columns to numeric
 Resultados_gober[, -c(3,4,28,31)] <- lapply(Resultados_gober[, -c(3,4,28,31)], as.numeric)
 
