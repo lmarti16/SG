@@ -50,6 +50,11 @@ saveWorkbook(wb, "Resultados_HIDALGO_DF1.xlsx", overwrite = TRUE)
 
 
 Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
+Municipios_HIDALGO$NOMBRE <- str_replace_all(Municipios_HIDALGO$NOMBRE, " ", "\n")
+
+# Suponiendo que tu dataframe se llama 'Municipios_HIDALGO'
+Municipios_HIDALGO <- Municipios_HIDALGO %>%
+  mutate(NOMBRE = paste0(tools::toTitleCase(tolower(NOMBRE))))
 
 # Crear el DataFrame Resultados_mun
 Resultados_mun <- Resultados_HIDALGO %>%
