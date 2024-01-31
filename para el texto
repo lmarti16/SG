@@ -267,3 +267,72 @@ archivos <- c(
 archivo_salida <- "D:\\52556\\Documents\\Secretaria_GralPRI\\HIDALGO_comparado.pdf"
 # Combina los archivos PDF en uno solo
 pdf_combine(archivos, output = archivo_salida)
+
+
+
+# Define el orden de los niveles en la columna Marginacion
+orden_marginacion <- c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto")
+
+# Ordena la columna Marginacion como factor con el orden específico
+Municipios_HIDALGO$Marginacion <- factor(Municipios_HIDALGO$Marginacion, levels = orden_marginacion)
+
+# Crea el mapa con ggplot
+Mapa_marginacion <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = Municipios_HIDALGO, aes(fill = Marginacion), alpha = .9, color = "grey") +
+    geom_sf_label(data = Municipios_HIDALGO, aes(label = paste0(NOMBRE, "\n", Marginacion)), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_discrete_diverging()+
+    labs(title = "Grado de Marginación en Hidalgo" ,
+         subtitle = "por Municipio",
+         fill = "Nivel de\nMarginación",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+
+# Guarda el mapa como un archivo PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\Mapa_marginacion.pdf", 
+       plot = Mapa_marginacion, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+# Crea el mapa con ggplot
+Mapa_cris <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = Municipios_HIDALGO, aes(fill = R_cristiano), alpha = .9, color = "grey") +
+    geom_sf_label(data = Municipios_HIDALGO, aes(label = paste0(NOMBRE, "\n", R_cristiano, "%")), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_binned_sequential() +
+    labs(title = "Distribución de Católicos y Cristianos en Hidalgo",
+         subtitle = "Porcentaje de Población Cristiana por Municipio",
+         fill = "Porcentaje Cristiano",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          legend.key.width = unit(2.5, "cm"),  # Ajustar el ancho de la caja de leyendas
+          legend.key.height = unit(.5, "cm"),
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\mapa_cris.pdf", 
+       plot = Mapa_cris, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
