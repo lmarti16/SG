@@ -143,7 +143,7 @@ DistritoL_HIDALGO_DF1 <- st_transform(DistritoL_HIDALGO_DF1, crs = 4326)
 
 # Definir los colores para cada nivel de competitividad
 colores_SUGERENCIA <- colorFactor(
-    palette = c("purple", "#6F4E37"), 
+    palette = c("purple", "white"), 
     levels = c("SI", "NO")
 )
 
@@ -513,7 +513,7 @@ mapa <- mapa %>%
 mapa <- mapa %>%
     addControl(
         html = "<div style='margin-bottom: 10px; text-align: center;'>
-                Distrito Local 13 de la HIDALGO<br>
+                Distrito Federal 1 de la HIDALGO<br>
                 Elaborado por Qualia: Asesoria Especializada<br>
                 Con datos del INE y el INEGI
             </div>",
