@@ -87,7 +87,7 @@ Resultados_HIDALGO$Traidores <- ifelse(
     Resultados_HIDALGO$Ganador_15 == "PRI" &
     Resultados_HIDALGO$Ganador_18 == "PRI" &
     Resultados_HIDALGO$Ganador_21 == "PRI",
-    "Traidores",
+    "Fugas",
     
     "No aplica"
   )
@@ -546,8 +546,8 @@ traidores_Hidalgo <-ggplot() +
     geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
     geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
-    scale_fill_manual(values = c("Traidores" = "#6F4E37", "Leales" = "red", "No aplica" = "white" ), name = "¿La sección electoral historicamente\nhabia sido priista y cambió a Morena?") +
-    labs(title = "Traidores:",
+    scale_fill_manual(values = c("Traidores" = "#6F4E37", "Leales" = "red", "No aplica" = "white" ), name = "¿La sección electoral historicamente\nhabia sido priista y cambió a Morena?",labels = c("Leales", "No Aplica", "Fugas")) +
+    labs(title = "Fugas:",
          subtitle = "Secciones electorales que habian sido priistas\ny en 2022 se fueron a morena",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
