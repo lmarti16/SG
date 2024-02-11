@@ -28,6 +28,20 @@ mapa300_24 <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\mapa300_24.shp"
 Resultados_gober <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober.csv")
 Colonias_HIDALGO <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
 datamun_Hidalgo <- read_sf("D:\\52556\\Documents\\Data_munHidalg.xlsx")
+sec_mex <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
+
+#Creamos la División
+Data_SecHidalgo  <- filter(sec_mex, ENTIDAD == 13)
+Data_SecHidalgo <- st_drop_geometry(Data_SecHidalgo)
+División_HLocal <- Data_SecHidalgo %>%
+    group_by(NOMBRE_DISTRITO_FEDERAL, DISTRITO_FEDERAL, DISTRITO_LOCAL) %>%
+    summarise(Secciones = n(),  # Contar el número de secciones
+              PADRON_HOMBRES = sum(PADRON_HOMBRES),
+              PADRON_MUJERES = sum(PADRON_MUJERES),
+              PADRON_ELECTORAL = sum(PADRON_ELECTORAL),
+              LISTA_HOMBRES = sum(LISTA_HOMBRES),
+              LISTA_MUJERES = sum(LISTA_MUJERES),
+              LISTA_NOMINAL = sum(LISTA_NOMINAL))
 
 #Crea las colonias
 # Define el orden de los niveles en la columna Marginacion
@@ -37,7 +51,6 @@ Colonias_HIDALGO <- filter(Colonias_HIDALGO, CVE_ENT == 13)
 Colonias_HIDALGO$CVE_MUN <- as.numeric(Colonias_HIDALGO$CVE_MUN)
 datamun_Hidalgo$Acceso_100 <- as.numeric(datamun_Hidalgo$Acceso_100)
 Colonias_HIDALGO <- left_join(Colonias_HIDALGO, datamun_Hidalgo, by = c("CVE_MUN"))
-Colonias_HIDALGO_DF1 <- filter(Colonias_HIDALGO, DISTRITO == 1)
 
 # Reemplaza los espacios por saltos de línea en la columna NOMBRE
 Municipios_HIDALGO$NOMBRE <- str_replace_all(Municipios_HIDALGO$NOMBRE, " ", "\n")
@@ -157,43 +170,42 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
                      CABECERA_DISTRITAL_LOCAL), as.numeric, errors = "coerce"))
 
 
-Resultados_HIDALGO_DF1 <- filter(Resultados_HIDALGO, DISTRITO == 1)
-Secciones_HIDALGO_DF1 <- filter(Secciones_HIDALGO,  DISTRITO == 1)
-DISTRITOF_HIDALGO_DF1 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 1)
+Resultados_HIDALGO_DF6 <- filter(Resultados_HIDALGO, DISTRITO == 6)
+Secciones_HIDALGO_DF6 <- filter(Secciones_HIDALGO,  DISTRITO == 6)
+DISTRITOF_HIDALGO_DF6 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 6)
+Colonias_HIDALGO_DF6 <- filter(Colonias_HIDALGO, DISTRITO == 6)
+DistritoL_HIDALGO_DF6 <- filter(Colonias_HIDALGO, DISTRITO == 6)
 
-# Filtrar las geometrías POLYGON después de la intersección
-DistritoL_HIDALGO_DF1 <- st_intersection(DISTRITOF_HIDALGO_DF1, DISTRITOL_HIDALGO)
-DistritoL_HIDALGO_DF1 <- DistritoL_HIDALGO_DF1[st_geometry_type(DistritoL_HIDALGO_DF1) == "POLYGON", ]
-
-# Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_SONORA_DF2
-Municipios_DF1 <- unique(Secciones_HIDALGO_DF1$MUNICIPIO)
-
-# Filtrar Municipios_Hidalgo
-Municipios_HIDALGO_DF1 <- Municipios_HIDALGO[Municipios_HIDALGO$MUNICIPIO %in% Municipios_DF1, ]
-Municipios_HIDALGO_DF1 <- left_join(Municipios_HIDALGO_DF1, datamun_Hidalgo, by = c("MUNICIPIO"))
-
-Resultados_HIDALGO_DF1$SECCION <- as.numeric(Resultados_HIDALGO_DF1$SECCION)
-Resultados_HIDALGO_DF1$ENTIDAD <- as.numeric(Resultados_HIDALGO_DF1$ENTIDAD)
+Municipios_HIDALGO_DF6 <- left_join(Municipios_HIDALGO, datamun_Hidalgo, by = c("MUNICIPIO"))
+Municipios_HIDALGO_DF6 <- filter(Municipios_HIDALGO_DF6, DISTRITO == 6)
 
 
-Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% 
+DistritoL_HIDALGO_DF6 <- left_join(DISTRITOL_HIDALGO, División_HLocal, by = c("DISTRITO_L" = "DISTRITO_LOCAL"))
+DistritoL_HIDALGO_DF6 <- filter(DistritoL_HIDALGO_DF6, DISTRITO_FEDERAL == 6)
+
+
+Resultados_HIDALGO_DF6$SECCION <- as.numeric(Resultados_HIDALGO_DF6$SECCION)
+Resultados_HIDALGO_DF6$ENTIDAD <- as.numeric(Resultados_HIDALGO_DF6$ENTIDAD)
+
+
+Resultados_HIDALGO_DF6 <- Resultados_HIDALGO_DF6 %>% 
     mutate( porcentaje_FAM_22 = (FAM_G_22 /LISTA_NOMINAL_22)*100)
 
-Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% 
+Resultados_HIDALGO_DF6 <- Resultados_HIDALGO_DF6 %>% 
     mutate( porcentaje_SHH_22 = (SHH_G_22 /LISTA_NOMINAL_22)*100)
 
-Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% 
+Resultados_HIDALGO_DF6 <- Resultados_HIDALGO_DF6 %>% 
     mutate( diferencia = porcentaje_FAM_22 - porcentaje_SHH_22)
 
-Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% 
+Resultados_HIDALGO_DF6 <- Resultados_HIDALGO_DF6 %>% 
     mutate(participacion = (TOTAL_VOTOS_22 / LISTA_NOMINAL_22) * 100)
 
 # Crear quintiles
-quintilesF <- quantile(Resultados_HIDALGO_DF1$porcentaje_FAM_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
-quintilesM <- quantile(Resultados_HIDALGO_DF1$porcentaje_SHH_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
-quintilesD <- quantile(Resultados_HIDALGO_DF1$diferencia, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
-quintilesparti <- quantile(Resultados_HIDALGO_DF1$participacion, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
-quintilesLN <- quantile(Resultados_HIDALGO_DF1$LISTA_NOMINAL, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesF <- quantile(Resultados_HIDALGO_DF6$porcentaje_FAM_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesM <- quantile(Resultados_HIDALGO_DF6$porcentaje_SHH_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesD <- quantile(Resultados_HIDALGO_DF6$diferencia, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesparti <- quantile(Resultados_HIDALGO_DF6$participacion, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesLN <- quantile(Resultados_HIDALGO_DF6$LISTA_NOMINAL, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
 
 # Definir etiquetas personalizadas
 labels_custom <- function(breaks) {
@@ -206,14 +218,14 @@ labels_custom <- function(breaks) {
 }
 
 # Agrega columna con quintiles y etiquetas personalizadas
-Resultados_HIDALGO_DF1$quintilF <- cut(Resultados_HIDALGO_DF1$porcentaje_FAM_22, breaks = quintilesF, include.lowest = TRUE, labels = labels_custom(quintilesF))
-Resultados_HIDALGO_DF1$quintilM <- cut(Resultados_HIDALGO_DF1$porcentaje_SHH_22, breaks = quintilesM, include.lowest = TRUE, labels = labels_custom(quintilesM))
-Resultados_HIDALGO_DF1$quintilD <- cut(Resultados_HIDALGO_DF1$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
-Resultados_HIDALGO_DF1$quintilparti <- cut(Resultados_HIDALGO_DF1$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
-Resultados_HIDALGO_DF1$quintilLN <- cut(Resultados_HIDALGO_DF1$LISTA_NOMINAL, breaks = quintilesLN, include.lowest = TRUE, labels = labels_custom(quintilesLN))
+Resultados_HIDALGO_DF6$quintilF <- cut(Resultados_HIDALGO_DF6$porcentaje_FAM_22, breaks = quintilesF, include.lowest = TRUE, labels = labels_custom(quintilesF))
+Resultados_HIDALGO_DF6$quintilM <- cut(Resultados_HIDALGO_DF6$porcentaje_SHH_22, breaks = quintilesM, include.lowest = TRUE, labels = labels_custom(quintilesM))
+Resultados_HIDALGO_DF6$quintilD <- cut(Resultados_HIDALGO_DF6$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
+Resultados_HIDALGO_DF6$quintilparti <- cut(Resultados_HIDALGO_DF6$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
+Resultados_HIDALGO_DF6$quintilLN <- cut(Resultados_HIDALGO_DF6$LISTA_NOMINAL, breaks = quintilesLN, include.lowest = TRUE, labels = labels_custom(quintilesLN))
 
 
-Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>%
+Resultados_HIDALGO_DF6 <- Resultados_HIDALGO_DF6 %>%
     mutate(Sugerencia = case_when(
         quintilLN == labels_custom(quintilesLN)[5] & quintilD == labels_custom(quintilesD)[4] & quintilparti == labels_custom(quintilesparti)[5] ~ "Sugerencia prioritaria",
         (quintilLN == labels_custom(quintilesLN)[5] | quintilLN == labels_custom(quintilesLN)[4]) & quintilD == labels_custom(quintilesD)[4] & (quintilparti == labels_custom(quintilesparti)[5] | quintilparti == labels_custom(quintilesparti)[4]) ~ "Sugerencia secundaria",
@@ -223,12 +235,12 @@ Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>%
 
 
 # Guarda el dataframe como un archivo CSV
-export(Resultados_HIDALGO_DF1, "Resultados_HIDALGO_DF1.csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise  = FALSE)
+export(Resultados_HIDALGO_DF6, "Resultados_HIDALGO_DF6.csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise = FALSE)
 
-Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
+Resultados_HIDALGO_DF6 <- Resultados_HIDALGO_DF6 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
 
 # Unir los dataframes por SECCION y ENTIDAD 
-mapaHIDALGO_DF1 <- left_join(Secciones_HIDALGO_DF1, Resultados_HIDALGO_DF1, by = c("SECCION", "ENTIDAD"))
+mapaHIDALGO_DF6 <- left_join(Secciones_HIDALGO_DF6, Resultados_HIDALGO_DF6, by = c("SECCION", "ENTIDAD"))
 
 #Crea el mapa del distrito
 HIDALGODF <- mapa300_24[mapa300_24$ENTIDAD == "13", ]
@@ -236,13 +248,13 @@ HIDALGODF <- mapa300_24[mapa300_24$ENTIDAD == "13", ]
 #Mapa Resultados
 Mapa_Resultados <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = GANADOR_21), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = GANADOR_21), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Seguimos Haciendo Historia" = "brown", "Fuerza y Corazón por México" = "blue", "Movimiento Ciudadano" = "orange", "Empate" = "purple" ), name = "Resultado electoral\n de la sección") +
-    labs(title = "¿Dónde ganaría cada coalición en el\nDistrito Federal 1 de Hidalgo según la votación de 2021?",
+    labs(title = "¿Dónde ganaría cada coalición en el\nDistrito Federal 6 de Hidalgo según la votación de 2021?",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -260,20 +272,20 @@ Mapa_Resultados <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Resultados.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Resultados.pdf", 
        plot = Mapa_Resultados, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Resultados a gobernadora
 Mapa_ResultadosG <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = GANADORG_C_22), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = GANADORG_C_22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Seguimos Haciendo Historia" = "brown", "Fuerza y Corazón por México" = "blue", "Movimiento Ciudadano" = "orange", "Empate" = "purple" ), name = "Resultado electoral\n de la sección") +
-    labs(title = "¿Dónde ganaría cada coalición en el\nDistrito Federal 1 de Hidalgo según la votación de 2022?",
+    labs(title = "¿Dónde ganaría cada coalición en el\nDistrito Federal 6 de Hidalgo según la votación de 2022?",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -291,21 +303,21 @@ Mapa_ResultadosG <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_ResultadosG.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_ResultadosG.pdf", 
        plot = Mapa_ResultadosG, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 
 #Mapa FAM
 Mapa_FAM <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = quintilF), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = quintilF), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "Spectral", name = "Competitividad\n de la manzana", labels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad")) +
-    labs(title = "Competitividad Electoral del FAM en el\nDistrito Federal 1 de Hidalgo",
+    labs(title = "Competitividad Electoral del FAM en el\nDistrito Federal 6 de Hidalgo",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist() + # Usar un tema más elegante
@@ -322,20 +334,20 @@ Mapa_FAM <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_FAM.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_FAM.pdf", 
        plot = Mapa_FAM, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa JHH
 Mapa_JHH <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = quintilM), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = quintilM), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "Paired", name = "Competitividad\n de la manzana", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
-    labs(title = "Competitividad Electoral de JHH en el\nDistrito Federal 1 de Hidalgo",
+    labs(title = "Competitividad Electoral de JHH en el\nDistrito Federal 6 de Hidalgo",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist() + # Usar un tema más elegante
@@ -352,20 +364,20 @@ Mapa_JHH <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_JHH.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_JHH.pdf", 
        plot = Mapa_JHH, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Diferencia
 Mapa_Diferencia <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = quintilD), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = quintilD), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "RdYlGn", name = "Competitividad\n de la manzana", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
-    labs(title = "Competitividad Electoral Comparada en el\nDistrito Federal 1 de Hidalgo",
+    labs(title = "Competitividad Electoral Comparada en el\nDistrito Federal 6 de Hidalgo",
          subtitle = "FAM contra JHH",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist() + # Usar un tema más elegante
@@ -382,9 +394,9 @@ Mapa_Diferencia <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Diferencia.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Diferencia.pdf", 
        plot = Mapa_Diferencia, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa resultados24
 Mapa_resultados24 <- ggplot() +
@@ -410,9 +422,9 @@ Mapa_resultados24 <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_resultados24.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_resultados24.pdf", 
        plot = Mapa_resultados24, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 
 #Mapa SigladoFAM
@@ -439,9 +451,9 @@ Mapa_SigladoFAM <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoFAM.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_SigladoFAM.pdf", 
        plot = Mapa_SigladoFAM, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 
 # Mapa SigladoSHH
@@ -468,9 +480,9 @@ Mapa_SigladoSHH <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoSHH.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_SigladoSHH.pdf", 
        plot = Mapa_SigladoSHH, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Mapa SigladoT
 Mapa_SigladoGanadorT <- ggplot() +
@@ -496,21 +508,21 @@ Mapa_SigladoGanadorT <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoGanadorT.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_SigladoGanadorT.pdf", 
        plot = Mapa_SigladoGanadorT, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Mapa switchers en 21
 Mapa_switchers <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = switcher), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = switcher), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("NO" = "green", "SI" = "Purple"), 
                        name = "¿La sección es Switcher?") +
-    labs(title = "¿Dónde estan las secciones Switchers del\nDistrito Federal 1 de Hidalgo en 2021?",
+    labs(title = "¿Dónde estan las secciones Switchers del\nDistrito Federal 6 de Hidalgo en 2021?",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist() + # Usar un tema más elegante
@@ -527,21 +539,21 @@ Mapa_switchers <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_switchers.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_switchers.pdf", 
        plot = Mapa_switchers, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Mapa switchers en 22
 Mapa_switchers22 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = Switchers22), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = Switchers22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("NO" = "green", "SI" = "Purple"), 
                        name = "¿La sección es Switcher?") +
-    labs(title = "¿Dónde estan las secciones Switchers del\nDistrito Federal 1 de Hidalgo en 2022?",
+    labs(title = "¿Dónde estan las secciones Switchers del\nDistrito Federal 6 de Hidalgo en 2022?",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist() + # Usar un tema más elegante
@@ -558,18 +570,18 @@ Mapa_switchers22 <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_switchers22.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_switchers22.pdf", 
        plot = Mapa_switchers22, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Mapa traidores
 traidores_Hidalgo <-ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = Traidores), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = Traidores), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Fugas" = "#6F4E37", "Leales" = "red", "No aplica" = "white" ), name = "¿La sección electoral historicamente\nhabia sido priista y cambió a Morena?",labels = c("Leales", "No Aplica", "Fugas")) +
     labs(title = "Fugas:",
          subtitle = "Secciones electorales que habian sido priistas\ny en 2022 se fueron a morena",
@@ -590,18 +602,18 @@ traidores_Hidalgo <-ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
    
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\traidores_Hidalgo.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\traidores_Hidalgo.pdf", 
        plot = traidores_Hidalgo, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Mapa GenePrepo
 Mapa_GenePrepo <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = Gene_prepo), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = Gene_prepo), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c( "GEN_Z" = "#E41A1C",  # Rojo
                                   "MILLENNIALS" = "#377EB8",  # Azul
                                   "GEN_X" = "#4DAF4A",  # Verde
@@ -609,7 +621,7 @@ Mapa_GenePrepo <- ggplot() +
                                   "SILENT" = "#EFB752", # amarillo
                                   "Sin datos"= "grey" ), 
                       name = "Generación Preponderante\nEn la manzana", limits = c("GEN_Z","MILLENNIALS","GEN_X","BOOMERS","SILENT","Sin datos")) +
-    labs(title = "¿Cúal es la generación preponderante en el\nDistrito Federal 1 de Hidalgo",
+    labs(title = "¿Cúal es la generación preponderante en el\nDistrito Federal 6 de Hidalgo",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist() + # Usar un tema más elegante
@@ -626,20 +638,20 @@ Mapa_GenePrepo <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_GenePrepo.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_GenePrepo.pdf", 
        plot = Mapa_GenePrepo, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Partidos22
 Mapa_Partidos22 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = GANADO_G_22), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = GANADO_G_22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Manzana") +
-    labs(title = "¿Qué Partido ganó en 2022 en el\nDistrito Federal 1 de Hidalgo?",
+    labs(title = "¿Qué Partido ganó en 2022 en el\nDistrito Federal 6 de Hidalgo?",
          subtitle = "Por sección electoraly sin coalición",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -658,20 +670,20 @@ Mapa_Partidos22 <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos22.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Partidos22.pdf", 
        plot = Mapa_Partidos22, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Partidos21
 Mapa_Partidos21 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = Ganador_21), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = Ganador_21), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Manzana") +
-    labs(title = "¿Qué Partido ganó en 2021 en el\nDistrito Federal 1 de Hidalgo?",
+    labs(title = "¿Qué Partido ganó en 2021 en el\nDistrito Federal 6 de Hidalgo?",
          subtitle = "Por sección electoraly sin coalición",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -690,20 +702,20 @@ Mapa_Partidos21 <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos21.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Partidos21.pdf", 
        plot = Mapa_Partidos21, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Partidos18
 Mapa_Partidos18 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = Ganador_18), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = Ganador_18), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Manzana") +
-    labs(title = "¿Qué Partido ganó en 2018 en el\nDistrito Federal 1 de Hidalgo?",
+    labs(title = "¿Qué Partido ganó en 2018 en el\nDistrito Federal 6 de Hidalgo?",
          subtitle = "Por sección electoraly sin coalición",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -722,20 +734,20 @@ Mapa_Partidos18 <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos18.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Partidos18.pdf", 
        plot = Mapa_Partidos18, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Participación
 Mapa_participacion <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = quintilparti), alpha = .9, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = quintilparti), alpha = .9, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "GnBu", name = "Participación de la manzana", labels = c("Muy poca", "Poca ", " media", "Alta ", "Muy alta ")) +
-    labs(title = "Participación Electoral\nen el Distrito Federal 1 de Hidalgo",
+    labs(title = "Participación Electoral\nen el Distrito Federal 6 de Hidalgo",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -754,20 +766,20 @@ Mapa_participacion <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_participacion.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_participacion.pdf", 
        plot = Mapa_participacion, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Lista Nacional
 Mapa_listaN <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = quintilLN), alpha = .9, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = quintilLN), alpha = .9, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "YlOrBr", name = "Tamaño de la lista nominal", labels = c("La más baja", "Baja ", " media", "Alta ", "La más alta ")) +
-    labs(title = "Secciones con la mayor Lista Nominal\nen el Distrito Federal 1 de Hidalgo",
+    labs(title = "Secciones con la mayor Lista Nominal\nen el Distrito Federal 6 de Hidalgo",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -786,20 +798,20 @@ Mapa_listaN <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_listaN.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_listaN.pdf", 
        plot = Mapa_listaN, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Cambios
 Mapa_Cambios <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = ifelse(lealtad18 == "NO", Ganador_21, "white")), alpha = .7, color = "grey") +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = ifelse(lealtad18 == "NO", Ganador_21, "white")), alpha = .7, color = "grey") +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Manzana") +
-    labs(title = "Secciones Electorales que cambiaron su voto\nen el Distrito Federal 1 de Hidalgo en 2021",
+    labs(title = "Secciones Electorales que cambiaron su voto\nen el Distrito Federal 6 de Hidalgo en 2021",
          subtitle = "Del 2018 a 2021 y el partido al que fue su voto",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -818,20 +830,20 @@ Mapa_Cambios <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Cambios.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Cambios.pdf", 
        plot = Mapa_Cambios, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa Cambios22
 Mapa_Cambios22 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = ifelse(Switchers22 == "SI", GANADO_G_22, "white")), alpha = .7, color = "grey") +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = ifelse(Switchers22 == "SI", GANADO_G_22, "white")), alpha = .7, color = "grey") +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Manzana") +
-    labs(title = "Secciones Electorales que cambiaron su voto\nen el Distrito Federal 1 de Hidalgo en 2022",
+    labs(title = "Secciones Electorales que cambiaron su voto\nen el Distrito Federal 6 de Hidalgo en 2022",
          subtitle = "Del 2021 al 2022 y el partido al que fue su voto",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
@@ -850,15 +862,15 @@ Mapa_Cambios22 <- ggplot() +
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 # Guardar el primer mapa como PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Cambios22.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Cambios22.pdf", 
        plot = Mapa_Cambios22, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Mapa de Contorno del universo
-mapa_Contorno_HIDALGO_DF1<- ggplot() +
+mapa_Contorno_HIDALGO_DF6<- ggplot() +
     annotation_map_tile(type = "osm", zoom = 12) +
-    geom_sf(data = DISTRITOF_HIDALGO_DF1, aes(fill = "Distrito Federal 1"), color = "black", size = 0.1, alpha = .5) +
-    labs(title = "Contorno del Distrito Federal 1 de Hidalgo",
+    geom_sf(data = DISTRITOF_HIDALGO_DF6, aes(fill = "Distrito Federal 6"), color = "black", size = 0.1, alpha = .5) +
+    labs(title = "Contorno del Distrito Federal 6 de Hidalgo",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") +
     guides(fill = guide_legend(ncol = 3)) +
@@ -875,43 +887,17 @@ mapa_Contorno_HIDALGO_DF1<- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),
           plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),
           plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contorno_HIDALGO_DF1.pdf", 
-       plot = mapa_Contorno_HIDALGO_DF1, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
-
-
-# Mapa de Contorno del universo
-mapa_Contorno_HIDALGO_DF1<- ggplot() +
-    annotation_map_tile(type = "osm", zoom = 12) +
-    geom_sf(data = DISTRITOF_HIDALGO_DF1, aes(fill = "Distrito Federal 1"), color = "black", size = 0.1, alpha = .5) +
-    labs(title = "Contorno del Distrito Federal 1 de Hidalgo",
-         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
-    theme_economist(base_family="ITC Officina Sans") +
-    guides(fill = guide_legend(ncol = 3)) +
-    theme(legend.position = "bottom",
-          legend.background = element_rect(fill = "#014d64"),
-          legend.text = element_text(size = 10, color = "white"),
-          legend.title = element_blank(),
-          axis.text = element_blank(),
-          axis.title = element_blank(),
-          axis.line = element_blank(),
-          panel.background = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),
-          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),
-          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contorno_HIDALGO_DF1.pdf", 
-       plot = mapa_Contorno_HIDALGO_DF1, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_Contorno_HIDALGO_DF6.pdf", 
+       plot = mapa_Contorno_HIDALGO_DF6, 
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 
 # Crear un mapa con colores únicos para cada municipio
-mapa_Contornomun_DF1 <- ggplot() +
+mapa_Contornomun_DF6 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 12) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NOMBRE), color = "black", size = 0.1, alpha = 0.5) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2.5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
-    labs(title = "Municipios dentro del Distrito Federal 1",
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NOMBRE), color = "black", size = 0.1, alpha = 0.5) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2.5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    labs(title = "Municipios dentro del Distrito Federal 6",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family = "ITC Officina Sans") +
     theme(legend.position = "null",
@@ -926,17 +912,17 @@ mapa_Contornomun_DF1 <- ggplot() +
           plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
           plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
           plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contornomun_DF1.pdf", 
-       plot = mapa_Contornomun_DF1, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_Contornomun_DF6.pdf", 
+       plot = mapa_Contornomun_DF6, 
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
-# Crear un mapa de Marginacion
-mapa_marginacion_DF1 <- ggplot() +
+# Crear un mapa de los Distritos Locales
+mapa_ContornoDL_DF6 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 12) +
-    geom_sf(data = DistritoL_HIDALGO_DF1, aes(fill = DISTRITO_L), color = "black", size = 0.1, alpha = 0.5) +
-    geom_sf_label(data = DistritoL_HIDALGO_DF1, aes(label = DISTRITO_L), size = 5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = DistritoL_HIDALGO_DF6, aes(fill = DISTRITO_L), color = "black", size = 0.1, alpha = 0.5) +
+    geom_sf_label(data = DistritoL_HIDALGO_DF6, aes(label = DISTRITO_L), size = 5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     labs(title = "Intersección de los Distritos locales con el",
-         subtitle = "Distrito Federal 1",
+         subtitle = "Distrito Federal 6",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family = "ITC Officina Sans") +
     theme(legend.position = "null",
@@ -951,26 +937,26 @@ mapa_marginacion_DF1 <- ggplot() +
           plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
           plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
           plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_ContornoDL_DF1.pdf", 
-       plot = mapa_ContornoDL_DF1, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_ContornoDL_DF6.pdf", 
+       plot = mapa_ContornoDL_DF6, 
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 
 #Mapa Marginación
-Mapa_Marginacion_DF1C <- ggplot() +
+Mapa_Marginacion_DF6C <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = Colonias_HIDALGO_DF1, aes(fill = GM_2020), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = Colonias_HIDALGO_DF6, aes(fill = GM_2020), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Muy bajo" = "#00FF00",  # Verde para "Muy bajo" (bueno)
                                  "Bajo" = "#66FF00",
                                  "Medio" = "#FFFF00",
                                  "Alto" = "#FF6600",
                                  "Muy alto" = "#FF0000"),  # Rojo para "Muy alto" (malo)
                       breaks = orden_marginacion) +
-    labs(title = "Grado de Marginación en el Distrito Federal 1 de Hidalgo",
+    labs(title = "Grado de Marginación en el Distrito Federal 6 de Hidalgo",
          subtitle = "Por Colonias más importantes y Sección Electoral",
          fill = "Nivel de\nMarginación",   
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
@@ -989,9 +975,9 @@ Mapa_Marginacion_DF1C <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Marginacion_DF1C.pdf", 
-       plot = Mapa_Marginacion_DF1C, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Marginacion_DF6C.pdf", 
+       plot = Mapa_Marginacion_DF6C, 
+       width = 11, height = 8.5, units = "in", device = "pdf")
 # Define el orden de los niveles en la columna Marginacion
 orden_marginacion <- c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto")
 
@@ -1024,9 +1010,9 @@ Mapa_marginacionM <- ggplot() +
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
 
 # Guarda el mapa como un archivo PDF
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_marginacionM.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_marginacionM.pdf", 
        plot = Mapa_marginacionM, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 
 # Crea el mapa con ggplot
@@ -1055,15 +1041,15 @@ Mapa_cris <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_cris.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_cris.pdf", 
        plot = Mapa_cris, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Crea el mapa con ggplot
 Mapa_acceso100 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = Acceso_100), alpha = .9, color = "black") +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = paste0(NOMBRE, "\n", Acceso_100, "%")), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = Acceso_100), alpha = .9, color = "black") +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = paste0(NOMBRE, "\n", Acceso_100, "%")), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_gradient2_tableau()+
     labs(title = "Distribución de Hogares con acceso a internet en el DF 1",
          subtitle = "Porcentaje por municipio ",
@@ -1085,63 +1071,63 @@ Mapa_acceso100 <- ggplot() +
           plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
           plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
           plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_acceso100.pdf",
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_acceso100.pdf",
 plot = Mapa_acceso100,
 width = 11, height = 8.5, units = "in", device = "pdf")
 
 #Mapa de sugerencia
 Mapa_Sugerencia <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF1, aes(fill = Sugerencia), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
-    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = Sugerencia), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue","NO"="white" ), name = "") +
-    labs(title = "Sugerencias para giras en el Distrito Federal 1",
+    labs(title = "Sugerencias para giras en el Distrito Federal 6",
          subtitle = "Secciones que suman más del 70% de la lista nominal, hay alta participación y pueden cambiar de lealtar partidista",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_stata()
 
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Sugerencia.pdf", 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Sugerencia.pdf", 
        plot = Mapa_Sugerencia, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
+       width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Lista de archivos PDF a combinar
 archivos <- c(
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Portada Hidalgo.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_resultados24.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoFAM.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoSHH.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoGanadorT.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contorno_HIDALGO_DF1.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_ContornoDL_DF1.pdf",  
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contornomun_DF1.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Resultados.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_ResultadosG.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_FAM.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_JHH.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Diferencia.pdf",
-     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos18.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos21.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Partidos22.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_switchers.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_switchers22.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Cambios.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Cambios22.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\traidores_Hidalgo.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_participacion.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_listaN.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_GenePrepo.pdf",
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Marginacion_DF1C.pdf", 
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_marginacionM.pdf", 
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_cris.pdf", 
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_acceso100.pdf"
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Sugerencia"
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Portada Hidalgo.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_resultados24.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_SigladoFAM.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_SigladoSHH.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_SigladoGanadorT.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_Contorno_HIDALGO_DF6.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_ContornoDL_DF6.pdf",  
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_Contornomun_DF6.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Resultados.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_ResultadosG.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_FAM.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_JHH.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Diferencia.pdf",
+     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Partidos18.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Partidos21.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Partidos22.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_switchers.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_switchers22.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Cambios.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Cambios22.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\traidores_Hidalgo.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_participacion.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_listaN.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_GenePrepo.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Marginacion_DF6C.pdf", 
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_marginacionM.pdf", 
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_cris.pdf", 
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_acceso100.pdf"
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Sugerencia"
 )
 
 # Directorio de salida para el archivo combinado
-archivo_salida <- "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\HIDALGO_Consolidado.pdf"
+archivo_salida <- "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\HIDALGO_Consolidado.pdf"
 
 # Combina los archivos PDF en uno solo
 pdf_combine(archivos, output = archivo_salida)
@@ -1150,10 +1136,10 @@ pdf_combine(archivos, output = archivo_salida)
 #Regresiones 
 
 #Participacion-FAM
-regression_ParticipacionF <- lm(participacion ~porcentaje_FAM_22, data = Resultados_HIDALGO_DF1)
+regression_ParticipacionF <- lm(participacion ~porcentaje_FAM_22, data = Resultados_HIDALGO_DF6)
 summary(regression_ParticipacionF )
 
-ggplot(Resultados_HIDALGO_DF1, aes(x = participacion, y = porcentaje_FAM_22)) +
+ggplot(Resultados_HIDALGO_DF6, aes(x = participacion, y = porcentaje_FAM_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(title = "A más participación, más votos por Fuerza y Corazón por México",
@@ -1165,11 +1151,11 @@ ggplot(Resultados_HIDALGO_DF1, aes(x = participacion, y = porcentaje_FAM_22)) +
 
 
 # Regresiones lineales
-regression_GEN_Z_Participacion <- lm(participacion ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
-regression_MILLENNIALS_Participacion  <- lm(participacion ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
-regression_GEN_X_Participacion  <- lm(participacion ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
-regression_BOOMERS_Participacion  <- lm(participacion ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
-regression_SILENT_Participacion  <- lm(participacion ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_GEN_Z_Participacion <- lm(participacion ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
+regression_MILLENNIALS_Participacion  <- lm(participacion ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
+regression_GEN_X_Participacion  <- lm(participacion ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
+regression_BOOMERS_Participacion  <- lm(participacion ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
+regression_SILENT_Participacion  <- lm(participacion ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Resumen de las regresiones
 summary(regression_GEN_Z_Participacion )
@@ -1179,7 +1165,7 @@ summary(regression_BOOMERS_Participacion )
 summary(regression_SILENT_Participacion )
 
 # Gráficos individuales
-plot_GEN_Z_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = participacion)) +
+plot_GEN_Z_participacion <- ggplot(Resultados_HIDALGO_DF6, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = participacion)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Participación electoral y los electores más jóvenes",
@@ -1187,7 +1173,7 @@ plot_GEN_Z_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOTAL_P
          y = "Participación electoral(%)") +
     theme_stata()
 
-plot_MILLENNIALS_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = participacion)) +
+plot_MILLENNIALS_participacion <- ggplot(Resultados_HIDALGO_DF6, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = participacion)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Participación electoral y los electores Millennials",
@@ -1195,7 +1181,7 @@ plot_MILLENNIALS_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = MILLENN
          y = "Participación electoral(%)") +
     theme_stata()
 
-plot_GEN_X_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOTAL_PORCENTAJE, y = participacion)) +
+plot_GEN_X_participacion <- ggplot(Resultados_HIDALGO_DF6, aes(x = GEN_X_TOTAL_PORCENTAJE, y = participacion)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Participación electoral y los electores Gen X",
@@ -1203,7 +1189,7 @@ plot_GEN_X_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOTAL_P
          y = "Participación electoral(%)") +
     theme_stata()
 
-plot_BOOMERS_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = participacion)) +
+plot_BOOMERS_participacion <- ggplot(Resultados_HIDALGO_DF6, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = participacion)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Participación electoral y los electores Boomers",
@@ -1211,7 +1197,7 @@ plot_BOOMERS_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS_TOT
          y = "Participación electoral(%)") +
     theme_stata()
 
-plot_SILENT_participacion <- ggplot(Resultados_HIDALGO_DF1, aes(x = SILENT_TOTAL_PORCENTAJE, y = participacion)) +
+plot_SILENT_participacion <- ggplot(Resultados_HIDALGO_DF6, aes(x = SILENT_TOTAL_PORCENTAJE, y = participacion)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Participación electoral y los electores Adultos Mayores",
@@ -1248,19 +1234,19 @@ print(combined_plots_participacion)
 
 
 # Regresión con GEN_Z_TOTAL_PORCENTAJE y porcentaje_FAM_22
-regression_GEN_Z_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_GEN_Z_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Regresión con MILLENNIALS_TOTAL_PORCENTAJE y porcentaje_FAM_22
-regression_MILLENNIALS_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_MILLENNIALS_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Regresión con GEN_X_TOTAL_PORCENTAJE y porcentaje_FAM_22
-regression_GEN_X_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_GEN_X_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Regresión con BOOMERS_TOTAL_PORCENTAJE y porcentaje_FAM_22
-regression_BOOMERS_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_BOOMERS_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Regresión con SILENT_TOTAL_PORCENTAJE y porcentaje_FAM_22
-regression_SILENT_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_SILENT_porcentaje_FAM_22 <- lm(formula = porcentaje_FAM_22 ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 # Resumen de las regresiones
 summary(regression_GEN_Z_porcentaje_FAM_22)
 summary(regression_MILLENNIALS_porcentaje_FAM_22)
@@ -1269,7 +1255,7 @@ summary(regression_BOOMERS_porcentaje_FAM_22)
 summary(regression_SILENT_porcentaje_FAM_22)
 
 # Gráficos individuales
-plot_GEN_Z_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+plot_GEN_Z_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores más jóvenes",
@@ -1277,7 +1263,7 @@ plot_GEN_Z_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOT
          y = "Votos por los partidos de\nFuerza & Corazón por México") +
     theme_stata()
 
-plot_MILLENNIALS_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+plot_MILLENNIALS_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores Millennials",
@@ -1285,7 +1271,7 @@ plot_MILLENNIALS_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = MIL
          y = "Votos por los partidos de\nFuerza & Corazón por México") +
     theme_stata()
 
-plot_GEN_X_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+plot_GEN_X_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = GEN_X_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores Gen X",
@@ -1293,7 +1279,7 @@ plot_GEN_X_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOT
          y = "Votos por los partidos de\nFuerza & Corazón por México") +
     theme_stata()
 
-plot_BOOMERS_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+plot_BOOMERS_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores Boomers",
@@ -1301,7 +1287,7 @@ plot_BOOMERS_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS
          y = "Votos por los partidos de\nFuerza & Corazón por México") +
     theme_stata()
 
-plot_SILENT_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = SILENT_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
+plot_SILENT_porcentaje_FAM_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = SILENT_TOTAL_PORCENTAJE, y = porcentaje_FAM_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nFuerza & Corazón por México y los electores Adultos Mayores",
@@ -1339,19 +1325,19 @@ print(combined_plots_porcentaje_FAM_22)
 
 
 # Regresión con GEN_Z_TOTAL_PORCENTAJE y porcentaje_SHH_22
-regression_GEN_Z_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_GEN_Z_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ GEN_Z_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Regresión con MILLENNIALS_TOTAL_PORCENTAJE y porcentaje_SHH_22
-regression_MILLENNIALS_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_MILLENNIALS_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ MILLENNIALS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Regresión con GEN_X_TOTAL_PORCENTAJE y porcentaje_SHH_22
-regression_GEN_X_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_GEN_X_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ GEN_X_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Regresión con BOOMERS_TOTAL_PORCENTAJE y porcentaje_SHH_22
-regression_BOOMERS_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_BOOMERS_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ BOOMERS_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Regresión con SILENT_TOTAL_PORCENTAJE y porcentaje_SHH_22
-regression_SILENT_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF1)
+regression_SILENT_porcentaje_SHH_22 <- lm(formula = porcentaje_SHH_22 ~ SILENT_TOTAL_PORCENTAJE, data = Resultados_HIDALGO_DF6)
 
 # Resumen de las regresiones
 summary(regression_GEN_Z_porcentaje_SHH_22)
@@ -1362,7 +1348,7 @@ summary(regression_SILENT_porcentaje_SHH_22)
 
 
 # Gráficos individuales
-plot_GEN_Z_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+plot_GEN_Z_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = GEN_Z_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores más jóvenes",
@@ -1370,7 +1356,7 @@ plot_GEN_Z_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_Z_TOT
          y = "Votos por los partidos de\nSigamos Haciendo Historia") +
     theme_stata()
 
-plot_MILLENNIALS_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+plot_MILLENNIALS_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = MILLENNIALS_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores Millennials",
@@ -1378,7 +1364,7 @@ plot_MILLENNIALS_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = MIL
          y = "Votos por los partidos de\nSigamos Haciendo Historia") +
     theme_stata()
 
-plot_GEN_X_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+plot_GEN_X_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = GEN_X_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores Gen X",
@@ -1386,7 +1372,7 @@ plot_GEN_X_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = GEN_X_TOT
          y = "Votos por los partidos de\nSigamos Haciendo Historia") +
     theme_stata()
 
-plot_BOOMERS_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+plot_BOOMERS_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = BOOMERS_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores Boomers",
@@ -1394,7 +1380,7 @@ plot_BOOMERS_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = BOOMERS
          y = "Votos por los partidos de\nSigamos Haciendo Historia") +
     theme_stata()
 
-plot_SILENT_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF1, aes(x = SILENT_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
+plot_SILENT_porcentaje_SHH_22 <- ggplot(Resultados_HIDALGO_DF6, aes(x = SILENT_TOTAL_PORCENTAJE, y = porcentaje_SHH_22)) +
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     labs(subtitle = "Regresión lineal entre el voto por\nSigamos Haciendo Historia y los electores Adultos Mayores",
