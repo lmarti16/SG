@@ -981,15 +981,18 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Marginacion_DF6C.pdf
 # Define el orden de los niveles en la columna Marginacion
 orden_marginacion <- c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto")
 
-# Ordena la columna Marginacion como factor con el orden específico
-Municipios_HIDALGO$Marginacion <- factor(Municipios_HIDALGO$Marginacion, levels = orden_marginacion)
 
 # Crea el mapa con ggplot
 Mapa_marginacionM <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = Municipios_HIDALGO, aes(fill = Marginacion), alpha = .9, color = "grey") +
-    geom_sf_label(data = Municipios_HIDALGO, aes(label = paste0(NOMBRE, "\n", Marginacion)), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
-    scale_fill_discrete_diverging()+
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = Marginacion), alpha = .9, color = "grey") +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = paste0(NOMBRE, "\n", Marginacion)), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Muy bajo" = "#00FF00",  # Verde para "Muy bajo" (bueno)
+                                 "Bajo" = "#66FF00",
+                                 "Medio" = "#FFFF00",
+                                 "Alto" = "#FF6600",
+                                 "Muy alto" = "#FF0000"),  # Rojo para "Muy alto" (malo)
+                      breaks = orden_marginacion) +    
     labs(title = "Grado de Marginación en el Distrito 1 de Hidalgo" ,
          subtitle = "por Municipio",
          fill = "Nivel de\nMarginación",
@@ -1018,8 +1021,8 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_marginacionM.pdf",
 # Crea el mapa con ggplot
 Mapa_cris <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = Municipios_HIDALGO, aes(fill = R_cristiano), alpha = .9, color = "grey") +
-    geom_sf_label(data = Municipios_HIDALGO, aes(label = paste0(NOMBRE, "\n", R_cristiano, "%")), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = R_cristiano), alpha = .9, color = "grey") +
+    geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = paste0(NOMBRE, "\n", R_cristiano, "%")), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_binned_sequential() +
     labs(title = "Distribución de Católicos y Cristianos en Hidalgo",
          subtitle = "Porcentaje de Población Cristiana por Municipio",
@@ -1122,7 +1125,7 @@ archivos <- c(
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Marginacion_DF6C.pdf", 
 "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_marginacionM.pdf", 
 "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_cris.pdf", 
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_acceso100.pdf"
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_acceso100.pdf",
 "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Sugerencia"
 )
 
