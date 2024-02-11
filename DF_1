@@ -26,7 +26,12 @@ DISTRITOF_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRIT
 DISTRITOL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_LOCAL.shp")
 mapa300_24 <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\mapa300_24.shp")
 Resultados_gober <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober.csv")
+Colonias_HIDALGO <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
+datamun_Hidalgo <- read_sf("D:\\52556\\Documents\\Data_munHidalg.xlsx")
 
+Colonias_HIDALGO <- filter(Colonias_HIDALGO, CVE_ENT == 13)
+Colonias_HIDALGO$CVE_MUN <- as.numeric(Colonias_HIDALGO$CVE_MUN)
+Colonias_HIDALGO <- left_join(Colonias_HIDALGO, datamun_Hidalgo, by = c("CVE_MUN"))
 
 # Reemplaza los espacios por saltos de línea en la columna NOMBRE
 Municipios_HIDALGO$NOMBRE <- str_replace_all(Municipios_HIDALGO$NOMBRE, " ", "\n")
