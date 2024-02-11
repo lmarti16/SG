@@ -1090,9 +1090,9 @@ Mapa_Sugerencia <- ggplot() +
     geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
     geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue",  "Sugerencia prioritaria" = "#FF0000", "NO" = "white"), name = "") +
-    labs(title = "Sugerencias para giras en el Distrito Federal 6",
+    labs(title = "Sugerencias para giras en el Distrito Federal 6", x="", y="",
          subtitle = "Secciones que suman más del 75% de la lista nominal, hay alta participación y pueden cambiar de lealtar partidista",
-         caption = "Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)") +
+         caption = "Elaborado por la Secretaría General CEN PRI\nFuente: INEGI e INE") +
     theme_stata()
 ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Sugerencia.pdf", 
        plot = Mapa_Sugerencia, 
