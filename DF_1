@@ -29,9 +29,15 @@ Resultados_gober <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultado
 Colonias_HIDALGO <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
 datamun_Hidalgo <- read_sf("D:\\52556\\Documents\\Data_munHidalg.xlsx")
 
+#Crea las colonias
+# Define el orden de los niveles en la columna Marginacion
+orden_marginacion <- c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto")
+datamun_Hidalgo$Marginacion <- factor(datamun_Hidalgo$Marginacion, levels = orden_marginacion)
 Colonias_HIDALGO <- filter(Colonias_HIDALGO, CVE_ENT == 13)
 Colonias_HIDALGO$CVE_MUN <- as.numeric(Colonias_HIDALGO$CVE_MUN)
+datamun_Hidalgo$Acceso_100 <- as.numeric(Colonias_HIDALGO$Acceso_100)
 Colonias_HIDALGO <- left_join(Colonias_HIDALGO, datamun_Hidalgo, by = c("CVE_MUN"))
+Colonias_HIDALGO_DF1 <- filter(Colonias_HIDALGO, DISTRITO == 1)
 
 # Reemplaza los espacios por saltos de línea en la columna NOMBRE
 Municipios_HIDALGO$NOMBRE <- str_replace_all(Municipios_HIDALGO$NOMBRE, " ", "\n")
@@ -164,7 +170,7 @@ Municipios_DF1 <- unique(Secciones_HIDALGO_DF1$MUNICIPIO)
 
 # Filtrar Municipios_Hidalgo
 Municipios_HIDALGO_DF1 <- Municipios_HIDALGO[Municipios_HIDALGO$MUNICIPIO %in% Municipios_DF1, ]
-
+Municipios_HIDALGO_DF1 <- left_join(Municipios_HIDALGO_DF1, datamun_Hidalgo, by = c("MUNICIPIO"))
 
 Resultados_HIDALGO_DF1$SECCION <- as.numeric(Resultados_HIDALGO_DF1$SECCION)
 Resultados_HIDALGO_DF1$ENTIDAD <- as.numeric(Resultados_HIDALGO_DF1$ENTIDAD)
@@ -888,7 +894,7 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contorno_HIDALGO_DF1
 
 
 # Crear un mapa con colores únicos para cada municipio
-mapa_Contornomun_DF_1 <- ggplot() +
+mapa_Contornomun_DF1 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 12) +
     geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NOMBRE), color = "black", size = 0.1, alpha = 0.5) +
     geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2.5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
@@ -907,12 +913,12 @@ mapa_Contornomun_DF_1 <- ggplot() +
           plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
           plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
           plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contornomun_DF_1.pdf", 
-       plot = mapa_Contornomun_DF_1, 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contornomun_DF1.pdf", 
+       plot = mapa_Contornomun_DF1, 
        width = 8.5, height = 11, units = "in", device = "pdf")
 
-# Crear un mapa con colores únicos para cada Distrito Local
-mapa_ContornoDL_DF_1 <- ggplot() +
+# Crear un mapa de Marginacion
+mapa_marginacion_DF1 <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 12) +
     geom_sf(data = DistritoL_HIDALGO_DF1, aes(fill = DISTRITO_L), color = "black", size = 0.1, alpha = 0.5) +
     geom_sf_label(data = DistritoL_HIDALGO_DF1, aes(label = DISTRITO_L), size = 5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
@@ -932,9 +938,143 @@ mapa_ContornoDL_DF_1 <- ggplot() +
           plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
           plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
           plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_ContornoDL_DF_1.pdf", 
-       plot = mapa_ContornoDL_DF_1, 
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_ContornoDL_DF1.pdf", 
+       plot = mapa_ContornoDL_DF1, 
        width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+#Mapa Marginación
+Mapa_Marginacion_DF1C <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = Colonias_HIDALGO_DF1, aes(fill = GM_2020), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Muy bajo" = "#00FF00",  # Verde para "Muy bajo" (bueno)
+                                 "Bajo" = "#66FF00",
+                                 "Medio" = "#FFFF00",
+                                 "Alto" = "#FF6600",
+                                 "Muy alto" = "#FF0000"),  # Rojo para "Muy alto" (malo)
+                      breaks = orden_marginacion) +
+    labs(title = "Grado de Marginación en el Distrito Federal 1 de Hidalgo",
+         subtitle = "Por Colonias más importantes y Sección Electoral",
+         fill = "Nivel de\nMarginación",   
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 6)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Marginacion_DF1C.pdf", 
+       plot = Mapa_Marginacion_DF1C, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+# Define el orden de los niveles en la columna Marginacion
+orden_marginacion <- c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto")
+
+# Ordena la columna Marginacion como factor con el orden específico
+Municipios_HIDALGO$Marginacion <- factor(Municipios_HIDALGO$Marginacion, levels = orden_marginacion)
+
+# Crea el mapa con ggplot
+Mapa_marginacionM <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = Municipios_HIDALGO, aes(fill = Marginacion), alpha = .9, color = "grey") +
+    geom_sf_label(data = Municipios_HIDALGO, aes(label = paste0(NOMBRE, "\n", Marginacion)), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_discrete_diverging()+
+    labs(title = "Grado de Marginación en el Distrito 1 de Hidalgo" ,
+         subtitle = "por Municipio",
+         fill = "Nivel de\nMarginación",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+
+# Guarda el mapa como un archivo PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_marginacionM.pdf", 
+       plot = Mapa_marginacionM, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+# Crea el mapa con ggplot
+Mapa_cris <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = Municipios_HIDALGO, aes(fill = R_cristiano), alpha = .9, color = "grey") +
+    geom_sf_label(data = Municipios_HIDALGO, aes(label = paste0(NOMBRE, "\n", R_cristiano, "%")), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_binned_sequential() +
+    labs(title = "Distribución de Católicos y Cristianos en Hidalgo",
+         subtitle = "Porcentaje de Población Cristiana por Municipio",
+         fill = "Porcentaje Cristiano",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          legend.key.width = unit(2.5, "cm"),  # Ajustar el ancho de la caja de leyendas
+          legend.key.height = unit(.5, "cm"),
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_cris.pdf", 
+       plot = Mapa_cris, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Crea el mapa con ggplot
+Mapa_acceso100 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = Acceso_100), alpha = .9, color = "black") +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = paste0(NOMBRE, "\n", Acceso_100, "%")), size = 1, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_gradient2_tableau()+
+    labs(title = "Distribución de Hogares con acceso a internet en el DF 1",
+         subtitle = "Porcentaje por municipio ",
+         fill = "Porcentaje De Hogares\nCon Acceso a internet",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          legend.key.width = unit(2.5, "cm"),  # Ajustar el ancho de la caja de leyendas
+          legend.key.height = unit(.5, "cm"),
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_acceso100.pdf",
+plot = Mapa_acceso100,
+width = 11, height = 8.5, units = "in", device = "pdf")
 
 # Lista de archivos PDF a combinar
 archivos <- c(
@@ -944,8 +1084,8 @@ archivos <- c(
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoSHH.pdf",
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoGanadorT.pdf",
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contorno_HIDALGO_DF1.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_ContornoDL_DF_1.pdf",  
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contornomun_DF_1.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_ContornoDL_DF1.pdf",  
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_Contornomun_DF1.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Resultados.pdf",
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_ResultadosG.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_FAM.pdf",
@@ -961,7 +1101,11 @@ archivos <- c(
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\traidores_Hidalgo.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_participacion.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_listaN.pdf", 
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_GenePrepo.pdf"
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_GenePrepo.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Marginacion_DF1C.pdf", 
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_marginacionM.pdf", 
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_cris.pdf", 
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_acceso100.pdf"
 )
 
 # Directorio de salida para el archivo combinado
