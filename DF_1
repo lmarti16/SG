@@ -172,6 +172,7 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
 
 Resultados_HIDALGO_DF6 <- filter(Resultados_HIDALGO, DISTRITO == 6)
 Secciones_HIDALGO_DF6 <- filter(Secciones_HIDALGO,  DISTRITO == 6)
+Manzanas_HIDALGO_DF6 <- filter(Manzanas_HIDALGO,  DISTRITO_F == 6)
 DISTRITOF_HIDALGO_DF6 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 6)
 Colonias_HIDALGO_DF6 <- filter(Colonias_HIDALGO, DISTRITO == 6)
 DistritoL_HIDALGO_DF6 <- filter(Colonias_HIDALGO, DISTRITO == 6)
@@ -241,6 +242,8 @@ Resultados_HIDALGO_DF6 <- Resultados_HIDALGO_DF6 %>% select( -"DISTRITO",-"DISTR
 
 # Unir los dataframes por SECCION y ENTIDAD 
 mapaHIDALGO_DF6 <- left_join(Secciones_HIDALGO_DF6, Resultados_HIDALGO_DF6, by = c("SECCION", "ENTIDAD"))
+
+mapaHIDALGO_DF6Man <- left_join(Manzanas_HIDALGO_DF6, Resultados_HIDALGO_DF6, by = c("SECCION", "ENTIDAD"))
 
 #Crea el mapa del distrito
 HIDALGODF <- mapa300_24[mapa300_24$ENTIDAD == "13", ]
@@ -1081,17 +1084,16 @@ width = 11, height = 8.5, units = "in", device = "pdf")
 #Mapa de sugerencia
 Mapa_Sugerencia <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
-    geom_sf(data = mapaHIDALGO_DF6, aes(fill = Sugerencia), alpha = .7, color = NA) +
+    geom_sf(data = mapaHIDALGO_DF6, aes(fill = ifelse(is.na(Sugerencia), "NO", Sugerencia)), alpha = .7, color = NA) +
     geom_sf(data = Secciones_HIDALGO_DF6, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_DF6, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_DF6, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
     geom_sf_label(data = Municipios_HIDALGO_DF6, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
-    scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue","NO"="white" ), name = "") +
+    scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue",  "Sugerencia prioritaria" = "#FF0000", "NO" = "white"), name = "") +
     labs(title = "Sugerencias para giras en el Distrito Federal 6",
-         subtitle = "Secciones que suman más del 70% de la lista nominal, hay alta participación y pueden cambiar de lealtar partidista",
-         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+         subtitle = "Secciones que suman más del 75% de la lista nominal, hay alta participación y pueden cambiar de lealtar partidista",
+         caption = "Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)") +
     theme_stata()
-
 ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Sugerencia.pdf", 
        plot = Mapa_Sugerencia, 
        width = 11, height = 8.5, units = "in", device = "pdf")
@@ -1123,10 +1125,10 @@ archivos <- c(
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_listaN.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_GenePrepo.pdf",
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Marginacion_DF6C.pdf", 
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_marginacionM.pdf", 
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_cris.pdf", 
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_acceso100.pdf",
-"D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Sugerencia"
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_marginacionM.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\mapa_cris.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_acceso100.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF6\\Mapa_Sugerencia.pdf", 
 )
 
 # Directorio de salida para el archivo combinado
