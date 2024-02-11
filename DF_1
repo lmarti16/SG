@@ -13,7 +13,7 @@ library(ggthemes)
 library(wesanderson)
 library(pdftools)
 library(stringr)
-
+library(rio)
 
 # Leer archivo SHP usando read_sf()
 Manzanas_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MANZANA.shp")
@@ -200,7 +200,7 @@ labels_custom <- function(breaks) {
   n <- length(breaks) - 1
   labels <- character(n)
   for (i in 1:n) {
-    labels[i] <- paste0("(", floor(breaks[i]), ", ", floor(breaks[i + 1]), "]")
+    labels[i] <- ifelse(i < n, paste0("(", ceiling(breaks[i]), ", ", floor(breaks[i + 1]), "]"), paste0("[", ceiling(breaks[i]), ", ", ceiling(breaks[i + 1]), "]"))
   }
   return(labels)
 }
@@ -211,6 +211,19 @@ Resultados_HIDALGO_DF1$quintilM <- cut(Resultados_HIDALGO_DF1$porcentaje_SHH_22,
 Resultados_HIDALGO_DF1$quintilD <- cut(Resultados_HIDALGO_DF1$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
 Resultados_HIDALGO_DF1$quintilparti <- cut(Resultados_HIDALGO_DF1$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
 Resultados_HIDALGO_DF1$quintilLN <- cut(Resultados_HIDALGO_DF1$LISTA_NOMINAL, breaks = quintilesLN, include.lowest = TRUE, labels = labels_custom(quintilesLN))
+
+
+Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>%
+    mutate(Sugerencia = case_when(
+        quintilLN == labels_custom(quintilesLN)[5] & quintilD == labels_custom(quintilesD)[4] & quintilparti == labels_custom(quintilesparti)[5] ~ "Sugerencia prioritaria",
+        (quintilLN == labels_custom(quintilesLN)[5] | quintilLN == labels_custom(quintilesLN)[4]) & quintilD == labels_custom(quintilesD)[4] & (quintilparti == labels_custom(quintilesparti)[5] | quintilparti == labels_custom(quintilesparti)[4]) ~ "Sugerencia secundaria",
+        (quintilLN == labels_custom(quintilesLN)[4] | quintilLN == labels_custom(quintilesLN)[5]) | (quintilD == labels_custom(quintilesD)[4] & quintilparti == labels_custom(quintilesparti)[5]) | quintilparti == labels_custom(quintilesparti)[4] ~ "Sugerencia secundaria",
+        TRUE ~ "NO"  # Asigna "NO" si ninguna de las condiciones se cumple
+    ))
+
+
+# Guarda el dataframe como un archivo CSV
+export(Resultados_HIDALGO_DF1, "Resultados_HIDALGO_DF1.csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise  = FALSE)
 
 Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
 
