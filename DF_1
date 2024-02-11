@@ -1089,6 +1089,24 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_acceso100.pdf",
 plot = Mapa_acceso100,
 width = 11, height = 8.5, units = "in", device = "pdf")
 
+#Mapa de sugerencia
+Mapa_Sugerencia <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 10) +
+    geom_sf(data = mapaHIDALGO_DF1, aes(fill = Sugerencia), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_DF1, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_DF1, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue","NO"="white" ), name = "") +
+    labs(title = "Sugerencias para giras en el Distrito Federal 1",
+         subtitle = "Secciones que suman más del 70% de la lista nominal, hay alta participación y pueden cambiar de lealtar partidista",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_stata()
+
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Sugerencia.pdf", 
+       plot = Mapa_Sugerencia, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
 # Lista de archivos PDF a combinar
 archivos <- c(
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Portada Hidalgo.pdf",
@@ -1119,6 +1137,7 @@ archivos <- c(
 "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_marginacionM.pdf", 
 "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\mapa_cris.pdf", 
 "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_acceso100.pdf"
+"D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Sugerencia"
 )
 
 # Directorio de salida para el archivo combinado
