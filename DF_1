@@ -35,7 +35,7 @@ orden_marginacion <- c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto")
 datamun_Hidalgo$Marginacion <- factor(datamun_Hidalgo$Marginacion, levels = orden_marginacion)
 Colonias_HIDALGO <- filter(Colonias_HIDALGO, CVE_ENT == 13)
 Colonias_HIDALGO$CVE_MUN <- as.numeric(Colonias_HIDALGO$CVE_MUN)
-datamun_Hidalgo$Acceso_100 <- as.numeric(Colonias_HIDALGO$Acceso_100)
+datamun_Hidalgo$Acceso_100 <- as.numeric(datamun_Hidalgo$Acceso_100)
 Colonias_HIDALGO <- left_join(Colonias_HIDALGO, datamun_Hidalgo, by = c("CVE_MUN"))
 Colonias_HIDALGO_DF1 <- filter(Colonias_HIDALGO, DISTRITO == 1)
 
