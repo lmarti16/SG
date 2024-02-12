@@ -1,0 +1,62 @@
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(stringr)
+library(rio)
+
+# Leer archivo SHP usando read_sf()
+Rios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\RIOS.shp")
+Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
+Rios_EDOMEX<- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\15 MEXICO\\RIOS.shp")
+Municipios_EDOMEX<- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\15 MEXICO\\MUNICIPIO.shp")
+Rios_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\RIOS.shp")
+Municipios_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\MUNICIPIO.shp")
+
+#Seleccionamos los municipios que importan
+
+Municipios_reyna <- Municipios_HIDALGO %>%
+    filter(MUNICIPIO %in% c(9, 12, 63, 73, 69,64,66,75))
+
+rio_reynaH <- Rios_HIDALGO %>%
+    filter(NOMBRE %in% c("TULA"))
+
+rio_reynaH <- st_intersection(Municipios_reyna,rio_reynaH)
+
+Municipios_reynaE <- Municipios_EDOMEX %>%
+    filter(MUNICIPIO %in% c(36,23,121,54,45,59,110,20,34,82,92, 109,105,24))
+
+rio_reynaE <- st_intersection(Municipios_reynaE,Rios_EDOMEX)
+
+Municipios_reynaC <- Municipios_CDMX %>%
+    filter(MUNICIPIO %in% c(5))
+rio_reynaC <- st_intersection(Municipios_reynaC,Rios_CDMX)
+
+#Mapa de sugerencia
+Mapa_TULA <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 12) +
+    geom_sf(data = Municipios_reyna, aes(fill = NULL), color = "black", size = 0.1, alpha = .7) +
+    geom_sf(data = Municipios_reynaE , aes(fill = NULL), color = "black", size = 0.1, alpha = .7) +
+    geom_sf(data = Municipios_reynaC , aes(fill = NULL), color = "black", size = 0.1, alpha = .7) +
+    geom_sf_label(data = Municipios_reyna, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_reynaE, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = rio_reynaH , aes(geometry = geometry), color="darkblue") +
+    geom_sf(data = rio_reynaE , aes(geometry = geometry), color="darkblue") +
+    geom_sf(data = rio_reynaC , aes(geometry = geometry), color="darkblue") +
+    scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue",  "Sugerencia prioritaria" = "#FF0000", "NO" = "white"), name = "") +
+    labs(title = "Trazo del río Tula y elementos contaminantes", x="", y="",
+         subtitle = "",
+         caption = "Reyna Juana Monroy Barrera\nFuente: INEGI") +
+    theme_stata()
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\Reyna_Monroy\\Mapa_TULA.pdf", 
+       plot = Mapa_TULA, 
+       width = 8, height = 11.5, units = "in", device = "pdf")
