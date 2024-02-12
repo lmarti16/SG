@@ -996,7 +996,7 @@ Mapa_marginacionM <- ggplot() +
                                  "Alto" = "#FF6600",
                                  "Muy alto" = "#FF0000"),  # Rojo para "Muy alto" (malo)
                       breaks = orden_marginacion) +    
-    labs(title = "Grado de Marginación en el Distrito 1 de Hidalgo" ,
+    labs(title = "Grado de Marginación en el Distrito Federal 1 de Hidalgo" ,
          subtitle = "por Municipio",
          fill = "Nivel de\nMarginación",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
