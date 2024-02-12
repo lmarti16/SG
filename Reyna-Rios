@@ -21,9 +21,15 @@ Rios_EDOMEX<- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\15 MEXICO\\RIOS.shp")
 Municipios_EDOMEX<- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\15 MEXICO\\MUNICIPIO.shp")
 Rios_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\RIOS.shp")
 Municipios_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\MUNICIPIO.shp")
+hospitales <- read_sf("D:\\Descargas\\hospitales\\INEGI_DENUE_11022024.shp")
+Plantas_Potabilizadoras <- read_sf("D:\\Descargas\\plantas_muni\\m29_vwplantastarmPoint.shp")
+Depositos_basura <- read_sf("D:\\Descargas\\desechos\\inegi_deposi_des_2000.shp")
+fabricas <- read_sf("D:\\Descargas\\Fabricas\\INEGI_DENUE_11022024.shp")
+R_miguelHidalgo <- read_sf("D:\\Descargas\\R_miguelHidalgo\\INEGI_DENUE_11022024.shp")
+termoelectrica <- read_sf("D:\\Descargas\\termoelectrica\\INEGI_DENUE_11022024.shp")
+
 
 #Seleccionamos los municipios que importan
-
 Municipios_reyna <- Municipios_HIDALGO %>%
     filter(MUNICIPIO %in% c(9, 12, 63, 73, 69,64,66,75))
 
@@ -41,22 +47,53 @@ Municipios_reynaC <- Municipios_CDMX %>%
     filter(MUNICIPIO %in% c(5))
 rio_reynaC <- st_intersection(Municipios_reynaC,Rios_CDMX)
 
-#Mapa de sugerencia
+Todos_Municipios_reyna <- rbind(Municipios_reyna, Municipios_reynaE, Municipios_reynaC)
+
+
+Plantas_Potabilizadoras <- st_transform(Plantas_Potabilizadoras, crs = st_crs(Todos_Municipios_reyna))
+hospitales <- st_transform(hospitales, crs = st_crs(Todos_Municipios_reyna))
+Depositos_basura<- st_transform(Depositos_basura, crs = st_crs(Todos_Municipios_reyna))
+fabricas<- st_transform(fabricas, crs = st_crs(Todos_Municipios_reyna))
+
+Plantas_PotabilizadorasR <- st_intersection(Todos_Municipios_reyna, Plantas_Potabilizadoras)
+Depositos_basuraR <- st_intersection(Todos_Municipios_reyna, Depositos_basura)
+hospitalesR <- st_intersection(Todos_Municipios_reyna, hospitales)
+fabricasR <- st_intersection(Todos_Municipios_reyna, fabricas)
+termoelectrica <- st_transform(termoelectrica, crs = st_crs(Todos_Municipios_reyna))
+R_miguelHidalgo<- st_transform(R_miguelHidalgo, crs = st_crs(Todos_Municipios_reyna))
+
+
+# Reemplaza los espacios por saltos de línea en la columna NOMBRE
+Todos_Municipios_reyna$NOMBRE <- str_replace_all(Todos_Municipios_reyna$NOMBRE, " ", "\n")
+
+# Suponiendo que tu dataframe se llama 'Municipios_HIDALGO'
+Todos_Municipios_reyna <- Todos_Municipios_reyna %>%
+  mutate(NOMBRE = paste0(tools::toTitleCase(tolower(NOMBRE))))
+
+# Mapa de sugerencia con puntos y leyenda
 Mapa_TULA <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 12) +
-    geom_sf(data = Municipios_reyna, aes(fill = NULL), color = "black", size = 0.1, alpha = .7) +
-    geom_sf(data = Municipios_reynaE , aes(fill = NULL), color = "black", size = 0.1, alpha = .7) +
-    geom_sf(data = Municipios_reynaC , aes(fill = NULL), color = "black", size = 0.1, alpha = .7) +
-    geom_sf_label(data = Municipios_reyna, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_reynaE, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    geom_sf(data = Todos_Municipios_reyna, aes(fill = NULL), color = "black", size = 0.1, alpha = .7) +
+    geom_sf_label(data = Todos_Municipios_reyna, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0, label.size = NA) +
     geom_sf(data = rio_reynaH , aes(geometry = geometry), color="darkblue") +
     geom_sf(data = rio_reynaE , aes(geometry = geometry), color="darkblue") +
     geom_sf(data = rio_reynaC , aes(geometry = geometry), color="darkblue") +
-    scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue",  "Sugerencia prioritaria" = "#FF0000", "NO" = "white"), name = "") +
-    labs(title = "Trazo del río Tula y elementos contaminantes", x="", y="",
+    geom_sf(data = Plantas_PotabilizadorasR, aes(color = "Plantas Potabilizadoras"), size = .6, shape = 17) +
+    geom_sf(data = Depositos_basuraR, aes(color = "Depósitos de Basura"), size = .6, shape = 15) +
+    geom_sf(data = hospitalesR, aes(color = "Hospitales"), size = .6, shape = 16) +
+    geom_sf(data = fabricasR, aes(color = "Fabricas"), size = 1, shape = 14) +
+    geom_sf(data = termoelectrica, aes(color = "Termoeléctrica FPR"), size = 5, shape = 18) +  # Punto de la refinería
+    geom_sf(data = R_miguelHidalgo, aes(color = "Presas"), size = .1, shape = 17) + 
+    geom_sf(data = R_miguelHidalgo, aes(color = "Rio Tula"), size = .1, shape = 17) + 
+    geom_sf(data = R_miguelHidalgo, aes(color = "Refinería MH"), size = 5, shape = 17) + 
+    scale_color_manual(name = "", values = c("Plantas Potabilizadoras" = "purple", "Depósitos de Basura" = "brown", "Hospitales" = "pink", "Fabricas" = "cyan", "Termoeléctrica FPR"= "red", "Refinería MH"="darkred", "Presas" ="blue","Rio Tula" ="darkblue")) +
+    scale_shape_manual(name = "", values = c("Plantas Potabilizadoras" = 17, "Depósitos de Basura" = 15, "Hospitales" = 16, "Fabricas" = 14, "Termoeléctrica FPR"= 18, "Refinería MH"= 19)) +
+    labs(title = "Trazo del río Tula y elementos contaminantes", x="", y="", Fill ="",
          subtitle = "",
          caption = "Reyna Juana Monroy Barrera\nFuente: INEGI") +
     theme_stata()
+
 ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\Reyna_Monroy\\Mapa_TULA.pdf", 
        plot = Mapa_TULA, 
        width = 8, height = 11.5, units = "in", device = "pdf")
+
