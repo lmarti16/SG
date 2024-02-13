@@ -70,3 +70,34 @@ datos_eliminados_divididos <- datos_eliminados_divididos %>%
 Resultados_gober <- rbind(nuevos_datos, datos_eliminados_divididos)
 
 Resultados_HIDALGO <- left_join(Data_SecHidalgo , Resultados_gober, by = c("SECCION", "ENTIDAD"))
+
+
+#RESECCIONAMIENTO 21
+Resultados21 <- read_sf("D:\\52556\\Documents\\Proyecto F\\Resultados_24.csv")
+Resultados21 <- Resultados21 %>% select( -"field_1")
+Resultados21 <- Resultados21 %>% select("SECCION","ENTIDAD", "GANADOR")
+Resultados21$ENTIDAD <- as.numeric(Resultados21$ENTIDAD)
+Resultados21$SECCION <- as.numeric(Resultados21$SECCION)
+reseccionamiento <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\reseccionamiento.csv")
+reseccionamiento$ENTIDAD <- as.numeric(reseccionamiento$ENTIDAD)
+reseccionamiento$SECCION_ORIGEN <- as.numeric(reseccionamiento$SECCION_ORIGEN)
+reseccionamiento$SECCION_CREADA <- as.numeric(reseccionamiento$SECCION_CREADA)
+
+# Crear nueva columna NUEVA_SECCION
+Resultados21_N <- Resultados21 %>%
+    left_join(reseccionamiento, by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD" = "ENTIDAD")) %>%
+    mutate(NUEVA_SECCION = ifelse(!is.na(SECCION_CREADA), SECCION_CREADA, SECCION)) %>%
+    select(-SECCION_CREADA)
+
+Resultados21_N<- Resultados21_N %>% select(-SECCION)
+
+Resultados21_N <- Resultados21_N %>%
+    rename(SECCION = NUEVA_SECCION)
+
+Resultados21_N <- Resultados21_N %>%
+    rename(GANADOR_21 = GANADOR)
+
+Resultados_HIDALGO <- left_join(Data_SecHidalgo , Resultados_gober, by = c("SECCION", "ENTIDAD"))
+
+
+
