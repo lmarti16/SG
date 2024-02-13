@@ -1,4 +1,19 @@
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
 library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(stringr)
+library(rio)
+
 Re_sec <- read_excel("D:/Descargas/test_pachuca.xlsx", 
     sheet = "Ressecionamiento", col_types = c("numeric", 
         "numeric", "numeric", "numeric"))
@@ -58,38 +73,8 @@ datos_eliminados_divididos <- datos_eliminados_divididos %>%
   mutate(across(!c(CIRCUNSCRIPCION, ENTIDAD, SECCION), floor))
 
 # Unir estos datos al dataframe de nuevos_datos utilizando rbind
-nuevos_datos <- rbind(nuevos_datos, datos_eliminados_divididos)
+test_pachuca <- rbind(nuevos_datos, datos_eliminados_divididos)
 
 # Mostrar la estructura del nuevo dataframe
-str(nuevos_datos)
+str(test_pachuca)
 
-# Cargar librerías
-library(sf)
-library(dplyr)
-library(ggplot2)
-library(readr)
-library(reshape2)	
-library(tidyr)
-library(readxl)
-library(colorspace)
-library(ggspatial)
-library(ggthemes)
-library(wesanderson)
-library(pdftools)
-library(stringr)
-library(rio)
-
-# Leer archivo SHP usando read_sf()
-Manzanas_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MANZANA.shp")
-Secciones_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\SECCION.shp")
-Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
-Secciones_switchers <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Secciones_switchers.csv")
-Lista_Nominal_Selected <- read_sf("D:\\52556\\Documents\\Nassar-oax\\Lista_Nominal_Selected.csv")
-Resultados <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Resultados_1821.csv")
-DISTRITOF_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_FEDERAL.shp")
-DISTRITOL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_LOCAL.shp")
-mapa300_24 <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\mapa300_24.shp")
-Resultados_gober <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober.csv")
-Colonias_HIDALGO <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
-datamun_Hidalgo <- read_sf("D:\\52556\\Documents\\Data_munHidalg.xlsx")
-sec_mex <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
