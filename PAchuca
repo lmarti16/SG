@@ -13,10 +13,15 @@ library(wesanderson)
 library(pdftools)
 library(stringr)
 library(rio)
+library(dplyr)
 
-Re_sec <- read_excel("D:/Descargas/test_pachuca.xlsx", 
-    sheet = "Ressecionamiento", col_types = c("numeric", 
-        "numeric", "numeric", "numeric"))
+reseccionamiento <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\reseccionamiento.csv")
+reseccionamiento$ENTIDAD <- as.numeric(reseccionamiento$ENTIDAD)
+reseccionamiento$SECCION_ORIGEN <- as.numeric(reseccionamiento$SECCION_ORIGEN)
+reseccionamiento$SECCION_CREADA <- as.numeric(reseccionamiento$SECCION_CREADA)
+
+reseccionamiento <- filter(reseccionamiento, ENTIDAD == 13)
+
 
 test_pachuca <- read_excel("D:/Descargas/test_pachuca.xlsx", 
                            col_types = c("numeric", "numeric", "numeric", 
@@ -29,40 +34,38 @@ test_pachuca <- read_excel("D:/Descargas/test_pachuca.xlsx",
                                          "numeric", "numeric", "numeric", 
                                          "numeric", "numeric", "numeric"))
 
-library(dplyr)
 
 # Filtrar las filas de test_pachuca donde SECCION está en SECCION_ORIGEN
 nuevos_datos <- test_pachuca %>%
-    filter(!SECCION %in% Re_sec$SECCION_ORIGEN)
+    filter(!SECCION %in% reseccionamiento$SECCION_ORIGEN)
 
 # Crear un nuevo dataframe con las filas eliminadas
 datos_eliminados <- test_pachuca %>%
-    filter(SECCION %in% Re_sec$SECCION_ORIGEN)
+    filter(SECCION %in% reseccionamiento$SECCION_ORIGEN)
 
 # Realizar un left join para asignar SECCION_CREADA a cada valor de SECCION
 datos_eliminados_con_creada <- datos_eliminados %>%
-  left_join(Re_sec, by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD"))
-
+  left_join(reseccionamiento, by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD"))
 
 # Obtener el número de repeticiones de cada SECCION
-repeticiones_seccion <- table(Re_sec$SECCION_ORIGEN)
+repeticiones_seccion <- table(reseccionamiento$SECCION_ORIGEN)
 
 # Dividir los valores por el número de repeticiones (excluyendo las columnas mencionadas)
 datos_eliminados_divididos <- datos_eliminados_con_creada %>%
-  mutate(across(!c(MUNICIPIO, SECCION_CREADA, CIRCUNSCRIPCION, ENTIDAD, SECCION), 
+  mutate(across(!c( SECCION_CREADA, CIRCUNSCRIPCION, SECCION), 
                 ~ . / repeticiones_seccion[match(SECCION, names(repeticiones_seccion))]))
 
 # Eliminar los decimales de todo el dataframe
 datos_eliminados_divididos <- datos_eliminados_divididos %>%
-  mutate(across(!c(MUNICIPIO, CIRCUNSCRIPCION, ENTIDAD, SECCION), floor))
+  mutate(across(!c( CIRCUNSCRIPCION, SECCION), floor))
 
 # Cambiar el lugar de SECCION y SECCION_CREADA en datos_eliminados_divididos
 datos_eliminados_divididos <- datos_eliminados_divididos %>%
-  select(MUNICIPIO, SECCION_CREADA, CIRCUNSCRIPCION, ENTIDAD, CASILLAS, PAN_22, PRI_22, PRD_22, PVEM_22, PT_22, MC_22, MORENA_22, PANALH_22, PAN_PRI_PRD_22, PAN_PRI_22, PAN_PRD_22, PRI_PRD_22, PT_MORENA_PANALH_22, PT_MORENA_22, PT_PANALH_22, MORENA_PANALH_22, NUM_VOTOS_VALIDOS, NUM_VOTOS_CAN_NREG_22, NUM_VOTOS_NULOS_22, TOTAL_VOTOS_22, LISTA_NOMINAL_22, FAM_G_22, SHH_G_22, SECCION)
+  select( SECCION_CREADA, CIRCUNSCRIPCION, ENTIDAD, CASILLAS, PAN_22, PRI_22, PRD_22, PVEM_22, PT_22, MC_22, MORENA_22, PANALH_22, PAN_PRI_PRD_22, PAN_PRI_22, PAN_PRD_22, PRI_PRD_22, PT_MORENA_PANALH_22, PT_MORENA_22, PT_PANALH_22, MORENA_PANALH_22, NUM_VOTOS_VALIDOS, NUM_VOTOS_CAN_NREG_22, NUM_VOTOS_NULOS_22, TOTAL_VOTOS_22, LISTA_NOMINAL_22, FAM_G_22, SHH_G_22, SECCION)
 
 # Eliminar las columnas SECCION y MUNICIPIO
 datos_eliminados_divididos <- datos_eliminados_divididos %>%
-  select(-SECCION, -MUNICIPIO)
+  select(-SECCION, )
 
 # Cambiar el nombre de SECCION_CREADA a SECCION
 datos_eliminados_divididos <- datos_eliminados_divididos %>%
@@ -70,11 +73,10 @@ datos_eliminados_divididos <- datos_eliminados_divididos %>%
 
 # Eliminar los decimales de todo el dataframe
 datos_eliminados_divididos <- datos_eliminados_divididos %>%
-  mutate(across(!c(CIRCUNSCRIPCION, ENTIDAD, SECCION), floor))
+  mutate(across(!c(CIRCUNSCRIPCION, SECCION), floor))
 
 # Unir estos datos al dataframe de nuevos_datos utilizando rbind
 test_pachuca <- rbind(nuevos_datos, datos_eliminados_divididos)
 
 # Mostrar la estructura del nuevo dataframe
 str(test_pachuca)
-
