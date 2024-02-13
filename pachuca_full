@@ -1,0 +1,1029 @@
+
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(stringr)
+library(rio)
+
+# Leer archivo SHP usando read_sf()
+Manzanas_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MANZANA.shp")
+Secciones_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\SECCION.shp")
+Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
+Secciones_switchers <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Secciones_switchers.csv")
+Lista_Nominal_Selected <- read_sf("D:\\52556\\Documents\\Nassar-oax\\Lista_Nominal_Selected.csv")
+Resultados <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Resultados_1821.csv")
+DISTRITOF_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_FEDERAL.shp")
+DISTRITOL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_LOCAL.shp")
+mapa300_24 <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\mapa300_24.shp")
+Resultados_gober <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober(resec).csv")
+Colonias_HIDALGO <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
+datamun_Hidalgo <- read_sf("D:\\52556\\Documents\\Data_munHidalg.xlsx")
+sec_mex <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
+
+#Creamos la División
+Data_SecHidalgo  <- filter(sec_mex, ENTIDAD == 13)
+Data_SecHidalgo <- st_drop_geometry(Data_SecHidalgo)
+División_HLocal <- Data_SecHidalgo %>%
+    group_by(NOMBRE_DISTRITO_FEDERAL, DISTRITO_FEDERAL, DISTRITO_LOCAL) %>%
+    summarise(Secciones = n(),  # Contar el número de secciones
+              PADRON_HOMBRES = sum(PADRON_HOMBRES),
+              PADRON_MUJERES = sum(PADRON_MUJERES),
+              PADRON_ELECTORAL = sum(PADRON_ELECTORAL),
+              LISTA_HOMBRES = sum(LISTA_HOMBRES),
+              LISTA_MUJERES = sum(LISTA_MUJERES),
+              LISTA_NOMINAL = sum(LISTA_NOMINAL))
+
+#Crea las colonias
+# Define el orden de los niveles en la columna Marginacion
+orden_marginacion <- c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto")
+datamun_Hidalgo$Marginacion <- factor(datamun_Hidalgo$Marginacion, levels = orden_marginacion)
+Colonias_HIDALGO <- filter(Colonias_HIDALGO, CVE_ENT == 13)
+Colonias_HIDALGO$CVE_MUN <- as.numeric(Colonias_HIDALGO$CVE_MUN)
+datamun_Hidalgo$Acceso_100 <- as.numeric(datamun_Hidalgo$Acceso_100)
+Colonias_HIDALGO <- left_join(Colonias_HIDALGO, datamun_Hidalgo, by = c("CVE_MUN"))
+
+# Reemplaza los espacios por saltos de línea en la columna NOMBRE
+Municipios_HIDALGO$NOMBRE <- str_replace_all(Municipios_HIDALGO$NOMBRE, " ", "\n")
+
+# Suponiendo que tu dataframe se llama 'Municipios_HIDALGO'
+Municipios_HIDALGO <- Municipios_HIDALGO %>%
+  mutate(NOMBRE = paste0(tools::toTitleCase(tolower(NOMBRE))))
+
+# Convert all columns to numeric
+Resultados_gober[, -c(3,4,28,31)] <- lapply(Resultados_gober[, -c(3,4,28,31)], as.numeric)
+
+Resultados_gober <- Resultados_gober %>% 
+    mutate( FAM_G_22 = (FAM_G_22 +PAN_PRI_PRD_22))
+Resultados_gober$GANADORG_C_22 <- ifelse(Resultados_gober$FAM_G_22 > Resultados_gober$SHH_G_22, "FAM_G", ifelse(Resultados_gober$SHH_G_22 > Resultados_gober$FAM_G_22, "SHH_G", "EMPATE"))
+
+
+# Nuevos nombres de columna
+nuevos_nombres <- c("ID", "ENTIDAD", "DISTRITO", "TIPO", "CONTROL", "GEOMETRY1_", "NOMBRE_ESTADO",
+                    "No_secciones", "No_Morena", "No_VPM", "No_Empate", "No_MC",
+                    "Suma_PAN", "Suma_PRI", "Suma_PRD", "Suma_PVEM", "Suma_PT", "Suma_MC",
+                    "Suma_MORENA", "Suma_PES", "Suma_RSP", "Suma_FXM", "Suma_CI",
+                    "Suma_PAN_PRI_PRD", "Suma_PAN_PRI", "Suma_PAN_PRD", "Suma_PRI_PRD",
+                    "Suma_PVEM_PT_MORENA", "Suma_PVEM_PT", "Suma_PVEM_MORENA", "Suma_PT_MORENA",
+                    "Suma_CANDIDATO_NO_REGISTRADO", "Suma_VOTOS_NULOS", "Suma_TOTAL_VOTOS_CALCULADOS",
+                    "Suma_LISTA_NOMINAL_CASILLA", "Suma_VaxMex_21", "Suma_Morena_21", "Suma_MC_21",
+                    "Suma_Otros_21", "Promedio_porcentaje_VPM", "Promedio_porcentaje_Morena",
+                    "Promedio_porcentaje_MC", "GANADOR", "Suma_Oposición", "GANADOR_Una_Oposicion",
+                    "SIGLADO_FAM", "SIGLADO_JHH", "SIGLADO_MC", "SIGLADO_G", "Ganador_Partido", "geometry")
+
+# Cambiar los nombres de columna
+colnames(mapa300_24) <- nuevos_nombres
+
+Resultados$SECCION <- as.numeric(Resultados$SECCION)
+Resultados$ENTIDAD <- as.numeric(Resultados$ENTIDAD)
+Secciones_switchers$SECCION <- as.numeric(Secciones_switchers$SECCION)
+Secciones_switchers$ENTIDAD <- as.numeric(Secciones_switchers$ENTIDAD)
+Lista_Nominal_Selected$SECCION <- as.numeric(Lista_Nominal_Selected$SECCION)
+Lista_Nominal_Selected$ENTIDAD <- as.numeric(Lista_Nominal_Selected$ENTIDAD)
+
+Resultados_HIDALGO <- filter(Resultados, ENTIDAD == 13)
+
+Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Secciones_switchers, by = c("SECCION","ENTIDAD"))
+Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Lista_Nominal_Selected, by = c("SECCION","ENTIDAD"))
+Resultados_HIDALGO <- left_join(Resultados_gober, Resultados_HIDALGO, by = c("SECCION","ENTIDAD"))
+
+# Crear la columna "Traidores"
+Resultados_HIDALGO$Traidores <- ifelse(
+  Resultados_HIDALGO$GANADO_G_22 == "PRI" &
+  Resultados_HIDALGO$Ganador_12 == "PRI" &
+  Resultados_HIDALGO$Ganador_15 == "PRI" &
+  Resultados_HIDALGO$Ganador_18 == "PRI" &
+  Resultados_HIDALGO$Ganador_21 == "PRI",
+  "Leales",
+  
+  ifelse(
+    Resultados_HIDALGO$GANADO_G_22 %in% c("MORENA", "PT", "PVEM", "PANALH") &
+    Resultados_HIDALGO$Ganador_12 == "PRI" &
+    Resultados_HIDALGO$Ganador_15 == "PRI" &
+    Resultados_HIDALGO$Ganador_18 == "PRI" &
+    Resultados_HIDALGO$Ganador_21 == "PRI",
+    "Fugas",
+    
+    "No aplica"
+  )
+)
+
+# Crear la columna "Switchers22"
+Resultados_HIDALGO$Switchers22 <- ifelse(
+  Resultados_HIDALGO$GANADO_G_22 ==  Resultados_HIDALGO$Ganador_21,
+  "NO",    
+    "SI"
+  )
+
+# Renombrar los valores
+Resultados_HIDALGO$GANADOR_21 <- recode(Resultados_HIDALGO$GANADOR_21,
+                                        "MORENA" = "Seguimos Haciendo Historia",
+                                        "VPM" = "Fuerza y Corazón por México",
+                                        "MC" = "Movimiento Ciudadano",
+                                        "EMPATE" = "Empate")
+
+mapa300_24$GANADOR <- recode(mapa300_24$GANADOR,
+                             "Morena" = "Seguimos Haciendo Historia",
+                             "VPM" = "Fuerza y Corazón por México",
+                             "MC" = "Movimiento Ciudadano",
+                             "EMPATE" = "Empate")
+
+Resultados_HIDALGO$GANADORG_C_22 <- recode(Resultados_HIDALGO$GANADORG_C_22,
+                                        "SHH_G" = "Seguimos Haciendo Historia",
+                                        "FAM_G" = "Fuerza y Corazón por México",
+                                        "MC" = "Movimiento Ciudadano",
+                                        "EMPATE" = "Empate")
+
+Resultados_HIDALGO <- Resultados_HIDALGO %>%
+    mutate(across(-c(NO_Mun,
+                     CIRCUNSCRIPCION,
+                     NOMBRE_ESTADO,
+                     NOMBRE_ENTIDAD,
+                     Cambio_elector,
+                     Gene_prepo,
+                     GANADO_G_22,
+                     Ganador_Partido21,
+                     Ganador_Partido18,
+                     Ganador_18,
+                     Ganador_21,
+                     Switcher,
+                     Switcher_coalición,
+                     lealtad,
+                     lealtad15,
+                     switcher,
+                     Switchers22,
+                     Traidores,
+                     Ganador_12,
+                     Ganador_15,
+                     GANADORG_C_22,
+                     GANADOR_21,
+                     lealtad18,
+                     CABECERA_DISTRITAL_LOCAL), as.numeric, errors = "coerce"))
+
+
+Resultados_HIDALGO_PACHUCA <- filter(Resultados_HIDALGO, NO_Mun == "PACHUCA DE SOTO")
+Secciones_HIDALGO_PACHUCA <- filter(Secciones_HIDALGO,  MUNICIPIO == 47)
+Manzanas_HIDALGO_PACHUCA <- filter(Manzanas_HIDALGO,  MUNICIPIO == 47)
+Municipios_HIDALGO_PACHUCA<- filter(Municipios_HIDALGO,  MUNICIPIO == 47)
+
+
+DISTRITOF_HIDALGO_PACHUCA <- st_intersection(DISTRITOF_HIDALGO, Municipios_HIDALGO_PACHUCA)
+DistritoL_HIDALGO_PACHUCA <- st_intersection(DISTRITOL_HIDALGO, Municipios_HIDALGO_PACHUCA)
+Colonias_HIDALGO_PACHUCA <- filter(Colonias_HIDALGO, CVE_MUN == 13048)
+
+Resultados_HIDALGO_PACHUCA$SECCION <- as.numeric(Resultados_HIDALGO_PACHUCA$SECCION)
+Resultados_HIDALGO_PACHUCA$ENTIDAD <- as.numeric(Resultados_HIDALGO_PACHUCA$ENTIDAD)
+
+
+Resultados_HIDALGO_PACHUCA <- Resultados_HIDALGO_PACHUCA %>% 
+    mutate( porcentaje_FAM_22 = (FAM_G_22 /LISTA_NOMINAL_22)*100)
+
+Resultados_HIDALGO_PACHUCA <- Resultados_HIDALGO_PACHUCA %>% 
+    mutate( porcentaje_SHH_22 = (SHH_G_22 /LISTA_NOMINAL_22)*100)
+
+Resultados_HIDALGO_PACHUCA <- Resultados_HIDALGO_PACHUCA %>% 
+    mutate( diferencia = porcentaje_FAM_22 - porcentaje_SHH_22)
+
+Resultados_HIDALGO_PACHUCA <- Resultados_HIDALGO_PACHUCA %>% 
+    mutate(participacion = (TOTAL_VOTOS_22 / LISTA_NOMINAL_22) * 100)
+
+# Crear quintiles
+quintilesF <- quantile(Resultados_HIDALGO_PACHUCA$porcentaje_FAM_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesM <- quantile(Resultados_HIDALGO_PACHUCA$porcentaje_SHH_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesD <- quantile(Resultados_HIDALGO_PACHUCA$diferencia, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesparti <- quantile(Resultados_HIDALGO_PACHUCA$participacion, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesLN <- quantile(Resultados_HIDALGO_PACHUCA$LISTA_NOMINAL, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+
+# Definir etiquetas personalizadas
+labels_custom <- function(breaks) {
+  n <- length(breaks) - 1
+  labels <- character(n)
+  for (i in 1:n) {
+    labels[i] <- ifelse(i < n, paste0("(", ceiling(breaks[i]), ", ", floor(breaks[i + 1]), "]"), paste0("[", ceiling(breaks[i]), ", ", ceiling(breaks[i + 1]), "]"))
+  }
+  return(labels)
+}
+
+# Agrega columna con quintiles y etiquetas personalizadas
+Resultados_HIDALGO_PACHUCA$quintilF <- cut(Resultados_HIDALGO_PACHUCA$porcentaje_FAM_22, breaks = quintilesF, include.lowest = TRUE, labels = labels_custom(quintilesF))
+Resultados_HIDALGO_PACHUCA$quintilM <- cut(Resultados_HIDALGO_PACHUCA$porcentaje_SHH_22, breaks = quintilesM, include.lowest = TRUE, labels = labels_custom(quintilesM))
+Resultados_HIDALGO_PACHUCA$quintilD <- cut(Resultados_HIDALGO_PACHUCA$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
+Resultados_HIDALGO_PACHUCA$quintilparti <- cut(Resultados_HIDALGO_PACHUCA$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
+Resultados_HIDALGO_PACHUCA$quintilLN <- cut(Resultados_HIDALGO_PACHUCA$LISTA_NOMINAL, breaks = quintilesLN, include.lowest = TRUE, labels = labels_custom(quintilesLN))
+
+
+Resultados_HIDALGO_PACHUCA <- Resultados_HIDALGO_PACHUCA %>%
+    mutate(Sugerencia = case_when(
+        quintilLN == labels_custom(quintilesLN)[5] & quintilD == labels_custom(quintilesD)[4] & quintilparti == labels_custom(quintilesparti)[5] ~ "Sugerencia prioritaria",
+        (quintilLN == labels_custom(quintilesLN)[5] | quintilLN == labels_custom(quintilesLN)[4]) & quintilD == labels_custom(quintilesD)[4] & (quintilparti == labels_custom(quintilesparti)[5] | quintilparti == labels_custom(quintilesparti)[4]) ~ "Sugerencia secundaria",
+        (quintilLN == labels_custom(quintilesLN)[4] | quintilLN == labels_custom(quintilesLN)[5]) | (quintilD == labels_custom(quintilesD)[4] & quintilparti == labels_custom(quintilesparti)[5]) | quintilparti == labels_custom(quintilesparti)[4] ~ "Sugerencia secundaria",
+        TRUE ~ "NO"  # Asigna "NO" si ninguna de las condiciones se cumple
+    ))
+
+
+# Guarda el dataframe como un archivo CSV
+export(Resultados_HIDALGO_PACHUCA, "Resultados_HIDALGO_PACHUCA.csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise = FALSE)
+
+Resultados_HIDALGO_PACHUCA <- Resultados_HIDALGO_PACHUCA %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
+
+# Unir los dataframes por SECCION y ENTIDAD 
+mapaHIDALGO_PACHUCA <- left_join(Secciones_HIDALGO_PACHUCA, Resultados_HIDALGO_PACHUCA, by = c("SECCION", "ENTIDAD"))
+
+mapaHIDALGO_PACHUCAMan <- left_join(Manzanas_HIDALGO_PACHUCA, Resultados_HIDALGO_PACHUCA, by = c("SECCION", "ENTIDAD"))
+
+#Crea el mapa del distrito
+HIDALGODF <- mapa300_24[mapa300_24$ENTIDAD == "13", ]
+
+#Mapa Resultados
+Mapa_Resultados <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = GANADOR_21), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Seguimos Haciendo Historia" = "brown", "Fuerza y Corazón por México" = "blue", "Movimiento Ciudadano" = "orange", "Empate" = "purple" ), name = "Resultado electoral\n de la sección") +
+    labs(title = "¿Dónde ganaría cada coalición en el\nMunicipio Pachuca de Hidalgo según la votación de 2021?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Resultados.pdf", 
+       plot = Mapa_Resultados, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Resultados a gobernadora
+Mapa_ResultadosG <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = GANADORG_C_22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Seguimos Haciendo Historia" = "brown", "Fuerza y Corazón por México" = "blue", "Movimiento Ciudadano" = "orange", "Empate" = "purple" ), name = "Resultado electoral\n de la sección") +
+    labs(title = "¿Dónde ganaría cada coalición en el\nMunicipio Pachuca de Hidalgo según la votación de 2022?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_ResultadosG.pdf", 
+       plot = Mapa_ResultadosG, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+#Mapa FAM
+Mapa_FAM <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = quintilF), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_brewer(palette = "Spectral", name = "Competitividad\n de la Sección Electoral", labels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad")) +
+    labs(title = "Competitividad Electoral del FAM en el\nMunicipio Pachuca de Hidalgo",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_FAM.pdf", 
+       plot = Mapa_FAM, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa JHH
+Mapa_JHH <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = quintilM), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_brewer(palette = "Paired", name = "Competitividad\n de la Sección Electoral", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
+    labs(title = "Competitividad Electoral de JHH en el\nMunicipio Pachuca de Hidalgo",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_JHH.pdf", 
+       plot = Mapa_JHH, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Diferencia
+Mapa_Diferencia <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = quintilD), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_brewer(palette = "RdYlGn", name = "Competitividad\n de la Sección Electoral", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
+    labs(title = "Competitividad Electoral Comparada en el\nMunicipio Pachuca de Hidalgo",
+         subtitle = "FAM contra JHH",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Diferencia.pdf", 
+       plot = Mapa_Diferencia, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa resultados24
+Mapa_resultados24 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = HIDALGODF, aes(fill = GANADOR), alpha = .7, color = "grey") +
+    geom_sf_label(data = HIDALGODF, aes(label = DISTRITO), size = 4, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Seguimos Haciendo Historia" = "brown", "Fuerza y Corazón por México" = "blue", "Movimiento Ciudadano" = "orange", "Empate" = "purple" ), name = "Resultado electoral\n de la sección") +
+    labs(title = "¿Dónde ganaría cada coalición en Hidalgo?",
+         subtitle = "Con la nueva distritación para 2024",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_resultados24.pdf", 
+       plot = Mapa_resultados24, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+#Mapa SigladoFAM
+Mapa_SigladoFAM <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = HIDALGODF, aes(fill = SIGLADO_FAM), alpha = .7, color = "grey") +
+    geom_sf_label(data = HIDALGODF, aes(label = DISTRITO), size = 4, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("PRI" = "red", "PAN" = "blue","PRD" = "yellow","Sin Coalición"="white" ), name = "Partido que\nsiglará", limits = c("PRI", "PAN","PRD","Sin Coalición")) +
+    labs(title = "¿Cómo quedó el acuerdo para 2024?",
+         subtitle = "Para la Coalición Fuerza y Corazón por México en Hidalgo",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_SigladoFAM.pdf", 
+       plot = Mapa_SigladoFAM, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+# Mapa SigladoSHH
+Mapa_SigladoSHH <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 7) +
+    geom_sf(data = HIDALGODF, aes(fill = SIGLADO_JHH), alpha = .9, color = "grey") +
+    geom_sf_label(data = HIDALGODF, aes(label = DISTRITO), size = 4, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("PRI" = "red", "PAN" = "blue", "PRD" = "#ffff00","MORENA"="#6F4E37", "PT" = "brown","PVEM"= "green", "MC"= "orange", "Sin Coalición" = "grey"), 
+                      name = "Partido que\nsiglará") +
+    labs(title = "¿Qué partido sigla cada distrito en HIDALGO?",
+         subtitle = "Para la coalición Sigamos Haciendo Historia",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    theme(legend.position = "bottom",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_text(size = 12, color = "#014d64", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_SigladoSHH.pdf", 
+       plot = Mapa_SigladoSHH, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Mapa SigladoT
+Mapa_SigladoGanadorT <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 7) +
+    geom_sf(data = HIDALGODF, aes(fill = SIGLADO_G), alpha = .9, color = "grey") +
+    geom_sf_label(data = HIDALGODF, aes(label = DISTRITO), size = 4, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("PRI" = "red", "PAN" = "blue", "PRD" = "#ffff00","MORENA"="#6F4E37", "PT" = "brown","PVEM"= "green", "MC"= "orange", "Sin Coalición" = "grey"), 
+                      name = "Partido que\nsiglará") +
+    labs(title = "¿Qué partido ganaría cada distrito en HIDALGO?",
+         subtitle = "Según el siglado y distritación 2024",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    theme(legend.position = "bottom",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_text(size = 12, color = "#014d64", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_SigladoGanadorT.pdf", 
+       plot = Mapa_SigladoGanadorT, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Mapa switchers en 21
+Mapa_switchers <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = switcher), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("NO" = "green", "SI" = "Purple"), 
+                       name = "¿La sección es Switcher?") +
+    labs(title = "¿Dónde estan las secciones Switchers del\nMunicipio Pachuca de Hidalgo en 2021?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_switchers.pdf", 
+       plot = Mapa_switchers, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Mapa switchers en 22
+Mapa_switchers22 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = Switchers22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("NO" = "green", "SI" = "Purple"), 
+                       name = "¿La sección es Switcher?") +
+    labs(title = "¿Dónde estan las secciones Switchers del\nMunicipio Pachuca de Hidalgo en 2022?",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_switchers22.pdf", 
+       plot = Mapa_switchers22, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Mapa traidores
+traidores_Hidalgo <-ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = Traidores), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Fugas" = "#6F4E37", "Leales" = "red", "No aplica" = "white" ), name = "¿La sección electoral historicamente\nhabia sido priista y cambió a Morena?") +
+    labs(title = "Fugas:",
+         subtitle = "Secciones electorales que habian sido priistas\ny en 2022 se fueron a morena",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 28, color = "red", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+   
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\traidores_Hidalgo.pdf", 
+       plot = traidores_Hidalgo, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Mapa GenePrepo
+Mapa_GenePrepo <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = Gene_prepo), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c( "GEN_Z" = "#E41A1C",  # Rojo
+                                  "MILLENNIALS" = "#377EB8",  # Azul
+                                  "GEN_X" = "#4DAF4A",  # Verde
+                                  "BOOMERS" = "#984EA3",  # Naranja
+                                  "SILENT" = "#EFB752", # amarillo
+                                  "Sin datos"= "grey" ), 
+                      name = "Generación Preponderante\nEn la Sección electoral", limits = c("GEN_Z","MILLENNIALS","GEN_X","BOOMERS","SILENT","Sin datos")) +
+    labs(title = "¿Cúal es la generación preponderante en el\nMunicipio Pachuca de Hidalgo",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist() + # Usar un tema más elegante
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_GenePrepo.pdf", 
+       plot = Mapa_GenePrepo, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Partidos22
+Mapa_Partidos22 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = GANADO_G_22), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
+    labs(title = "¿Qué Partido ganó en 2022 en el\nMunicipio Pachuca de Hidalgo?",
+         subtitle = "Por sección electoraly sin coalición",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 4)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Partidos22.pdf", 
+       plot = Mapa_Partidos22, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Partidos21
+Mapa_Partidos21 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = Ganador_21), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
+    labs(title = "¿Qué Partido ganó en 2021 en el\nMunicipio Pachuca de Hidalgo?",
+         subtitle = "Por sección electoraly sin coalición",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 4)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Partidos21.pdf", 
+       plot = Mapa_Partidos21, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Partidos18
+Mapa_Partidos18 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = Ganador_18), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
+    labs(title = "¿Qué Partido ganó en 2018 en el\nMunicipio Pachuca de Hidalgo?",
+         subtitle = "Por sección electoraly sin coalición",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 4)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Partidos18.pdf", 
+       plot = Mapa_Partidos18, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Participación
+Mapa_participacion <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = quintilparti), alpha = .9, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_brewer(palette = "GnBu", name = "Participación de la Sección Electoral", labels = c("Muy poca", "Poca ", " media", "Alta ", "Muy alta ")) +
+    labs(title = "Participación Electoral\nen el Municipio Pachuca de Hidalgo",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 13, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_participacion.pdf", 
+       plot = Mapa_participacion, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Lista Nacional
+Mapa_listaN <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = quintilLN), alpha = .9, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_brewer(palette = "YlOrBr", name = "Tamaño de la lista nominal", labels = c("La más baja", "Baja ", " media", "Alta ", "La más alta ")) +
+    labs(title = "Secciones con la mayor Lista Nominal\nen el Municipio Pachuca de Hidalgo",
+         subtitle = "Por sección electoral",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 13, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_listaN.pdf", 
+       plot = Mapa_listaN, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Cambios
+Mapa_Cambios <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = ifelse(lealtad18 == "NO", Ganador_21, "white")), alpha = .7, color = "grey") +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
+    labs(title = "Secciones Electorales que cambiaron su voto\nen el Municipio Pachuca de Hidalgo en 2021",
+         subtitle = "Del 2018 a 2021 y el partido al que fue su voto",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Cambios.pdf", 
+       plot = Mapa_Cambios, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+#Mapa Cambios22
+Mapa_Cambios22 <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = ifelse(Switchers22 == "SI", GANADO_G_22, "white")), alpha = .7, color = "grey") +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
+    labs(title = "Secciones Electorales que cambiaron su voto\nen el Municipio Pachuca de Hidalgo en 2022",
+         subtitle = "Del 2021 al 2022 y el partido al que fue su voto",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),  # Quitar texto de los ejes
+          axis.title = element_blank(),  # Quitar título de los ejes
+          axis.line = element_blank(),   # Quitar línea de los ejes
+          panel.background = element_blank(),  # Quitar fondo del panel
+          panel.grid.major = element_blank(),  # Quitar líneas de la grilla
+          panel.grid.minor = element_blank(),   # Quitar líneas de la grilla menor
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),  # Centrar y ajustar el tamaño del título
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),  # Centrar la caption y cambiar el color a blanco
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))  # Centrar el subtítulo
+# Guardar el primer mapa como PDF
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Cambios22.pdf", 
+       plot = Mapa_Cambios22, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Mapa de Contorno del universo
+mapa_Contorno_HIDALGO_PACHUCA<- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = DISTRITOF_HIDALGO_PACHUCA, aes(fill = "Municipio Pachuca"), color = "black", size = 0.1, alpha = .5) +
+    labs(title = "Contorno del Municipio Pachuca de Hidalgo",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 24, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_Contorno_HIDALGO_PACHUCA.pdf", 
+       plot = mapa_Contorno_HIDALGO_PACHUCA, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+# Crear un mapa con colores únicos para cada municipio
+mapa_Contornomun_PACHUCA <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NOMBRE), color = "black", size = 0.1, alpha = 0.5) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2.5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    labs(title = "Municipios dentro del Municipio Pachuca",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    theme(legend.position = "null",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_Contornomun_PACHUCA.pdf", 
+       plot = mapa_Contornomun_PACHUCA, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Crear un mapa de los Distritos Locales
+mapa_ContornoDL_PACHUCA <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = DistritoL_HIDALGO_PACHUCA, aes(fill = DISTRITO_L), color = "black", size = 0.1, alpha = 0.5) +
+    geom_sf_label(data = DistritoL_HIDALGO_PACHUCA, aes(label = DISTRITO_L), size = 5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    labs(title = "Intersección de los Distritos locales con el",
+         subtitle = "Municipio Pachuca",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    theme(legend.position = "null",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_ContornoDL_PACHUCA.pdf", 
+       plot = mapa_ContornoDL_PACHUCA, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+
+#Mapa Marginación
+Mapa_Marginacion_PACHUCAC <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = Colonias_HIDALGO_PACHUCA, aes(fill = GM_2020), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Muy bajo" = "#00FF00",  # Verde para "Muy bajo" (bueno)
+                                 "Bajo" = "#66FF00",
+                                 "Medio" = "#FFFF00",
+                                 "Alto" = "#FF6600",
+                                 "Muy alto" = "#FF0000"),  # Rojo para "Muy alto" (malo)
+                      breaks = orden_marginacion) +
+    labs(title = "Grado de Marginación en el Municipio Pachuca de Hidalgo",
+         subtitle = "Por Colonias más importantes y Sección Electoral",
+         fill = "Nivel de\nMarginación",   
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family="ITC Officina Sans") +
+    guides(fill = guide_legend(ncol = 6)) +
+    theme(legend.position = "bottom",
+          legend.background = element_rect(fill = "#014d64"),
+          legend.text = element_text(size = 10, color = "white"),
+          legend.title = element_text(size = 12, color = "white", face = "bold"),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5,size = 20, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5,size = 14, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5,size = 18, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Marginacion_PACHUCAC.pdf", 
+       plot = Mapa_Marginacion_PACHUCAC, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+# Define el orden de los niveles en la columna Marginacion
+orden_marginacion <- c("Muy bajo", "Bajo", "Medio", "Alto", "Muy alto")
+
+
+#Mapa de sugerencia
+Mapa_Sugerencia <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = ifelse(is.na(Sugerencia), "NO", Sugerencia)), alpha = .7, color = NA) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
+    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
+    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue",  "Sugerencia prioritaria" = "#FF0000", "NO" = "white"), name = "") +
+    labs(title = "Sugerencias para giras en el Municipio Pachuca", x="", y="",
+         subtitle = "Secciones que suman más del 75% de la lista nominal, hay alta participación y pueden cambiar de lealtar partidista",
+         caption = "Elaborado por la Secretaría General CEN PRI\nFuente: INEGI e INE") +
+    theme_stata()
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Sugerencia(PACHUCA).pdf", 
+       plot = Mapa_Sugerencia, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
+# Lista de archivos PDF a combinar
+archivos <- c(
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_Contorno_HIDALGO_PACHUCA.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_ContornoDL_PACHUCA.pdf",  
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_Contornomun_PACHUCA.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Resultados.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_ResultadosG.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_FAM.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_JHH.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Diferencia.pdf",
+     "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Partidos18.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Partidos21.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Partidos22.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_switchers.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_switchers22.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Cambios.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Cambios22.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\traidores_Hidalgo.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_participacion.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_listaN.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_GenePrepo.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Marginacion_PACHUCAC.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Sugerencia(PACHUCA).pdf"
+)
+
+# Directorio de salida para el archivo combinado
+archivo_salida <- "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\HIDALGO_Consolidado.pdf"
+
+# Combina los archivos PDF en uno solo
+pdf_combine(archivos, output = archivo_salida)
+
