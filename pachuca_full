@@ -260,7 +260,6 @@ Mapa_Resultados <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Seguimos Haciendo Historia" = "brown", "Fuerza y Corazón por México" = "blue", "Movimiento Ciudadano" = "orange", "Empate" = "purple" ), name = "Resultado electoral\n de la sección") +
     labs(title = "¿Dónde ganaría cada coalición en el\nMunicipio Pachuca de Hidalgo según la votación de 2021?",
          subtitle = "Por sección electoral",
@@ -291,7 +290,6 @@ Mapa_ResultadosG <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Seguimos Haciendo Historia" = "brown", "Fuerza y Corazón por México" = "blue", "Movimiento Ciudadano" = "orange", "Empate" = "purple" ), name = "Resultado electoral\n de la sección") +
     labs(title = "¿Dónde ganaría cada coalición en el\nMunicipio Pachuca de Hidalgo según la votación de 2022?",
          subtitle = "Por sección electoral",
@@ -323,7 +321,6 @@ Mapa_FAM <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "Spectral", name = "Competitividad\n de la Sección Electoral", labels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad")) +
     labs(title = "Competitividad Electoral del FAM en el\nMunicipio Pachuca de Hidalgo",
          subtitle = "Por sección electoral",
@@ -353,8 +350,7 @@ Mapa_JHH <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
-    scale_fill_brewer(palette = "Paired", name = "Competitividad\n de la Sección Electoral", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
+   scale_fill_brewer(palette = "Paired", name = "Competitividad\n de la Sección Electoral", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
     labs(title = "Competitividad Electoral de JHH en el\nMunicipio Pachuca de Hidalgo",
          subtitle = "Por sección electoral",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
@@ -383,7 +379,6 @@ Mapa_Diferencia <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "RdYlGn", name = "Competitividad\n de la Sección Electoral", labels = c("Muy poca", "Poca", "Media", "Alta", "Muy alta")) +
     labs(title = "Competitividad Electoral Comparada en el\nMunicipio Pachuca de Hidalgo",
          subtitle = "FAM contra JHH",
@@ -414,7 +409,6 @@ Mapa_switchers <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("NO" = "green", "SI" = "Purple"), 
                        name = "¿La sección es Switcher?") +
     labs(title = "¿Dónde estan las secciones Switchers del\nMunicipio Pachuca de Hidalgo en 2021?",
@@ -445,7 +439,6 @@ Mapa_switchers22 <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("NO" = "green", "SI" = "Purple"), 
                        name = "¿La sección es Switcher?") +
     labs(title = "¿Dónde estan las secciones Switchers del\nMunicipio Pachuca de Hidalgo en 2022?",
@@ -476,7 +469,6 @@ traidores_Hidalgo <-ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Fugas" = "#6F4E37", "Leales" = "red", "No aplica" = "white" ), name = "¿La sección electoral historicamente\nhabia sido priista y cambió a Morena?") +
     labs(title = "Fugas:",
          subtitle = "Secciones electorales que habian sido priistas\ny en 2022 se fueron a morena",
@@ -508,7 +500,6 @@ Mapa_GenePrepo <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c( "GEN_Z" = "#E41A1C",  # Rojo
                                   "MILLENNIALS" = "#377EB8",  # Azul
                                   "GEN_X" = "#4DAF4A",  # Verde
@@ -543,8 +534,7 @@ Mapa_Partidos22 <- ggplot() +
     geom_sf(data = mapaHIDALGO_PACHUCA, aes(fill = GANADO_G_22), alpha = .7, color = NA) +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
-    geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+   geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
     labs(title = "¿Qué Partido ganó en 2022 en el\nMunicipio Pachuca de Hidalgo?",
          subtitle = "Por sección electoraly sin coalición",
@@ -576,7 +566,6 @@ Mapa_Partidos21 <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
     labs(title = "¿Qué Partido ganó en 2021 en el\nMunicipio Pachuca de Hidalgo?",
          subtitle = "Por sección electoraly sin coalición",
@@ -608,7 +597,6 @@ Mapa_Partidos18 <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
     labs(title = "¿Qué Partido ganó en 2018 en el\nMunicipio Pachuca de Hidalgo?",
          subtitle = "Por sección electoraly sin coalición",
@@ -640,7 +628,6 @@ Mapa_participacion <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "GnBu", name = "Participación de la Sección Electoral", labels = c("Muy poca", "Poca ", " media", "Alta ", "Muy alta ")) +
     labs(title = "Participación Electoral\nen el Municipio Pachuca de Hidalgo",
          subtitle = "Por sección electoral",
@@ -672,7 +659,6 @@ Mapa_listaN <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_brewer(palette = "YlOrBr", name = "Tamaño de la lista nominal", labels = c("La más baja", "Baja ", " media", "Alta ", "La más alta ")) +
     labs(title = "Secciones con la mayor Lista Nominal\nen el Municipio Pachuca de Hidalgo",
          subtitle = "Por sección electoral",
@@ -704,7 +690,6 @@ Mapa_Cambios <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
     labs(title = "Secciones Electorales que cambiaron su voto\nen el Municipio Pachuca de Hidalgo en 2021",
          subtitle = "Del 2018 a 2021 y el partido al que fue su voto",
@@ -736,7 +721,6 @@ Mapa_Cambios22 <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("MORENA" = "#8B4513", "PRI" = "red","PAN" ="blue", "MC" = "orange", "Empate" ="pink" , "PRD" ="yellow","NUEVA_ALIANZA" = "cyan", "PES" ="purple", PT = "brown", "PVEM" = "green", "PANALH" = "cyan", "ES" = "purple", "NVA_ALIANZA" = "cyan"), name = "Resultado electoral\n de la Sección Electoral") +
     labs(title = "Secciones Electorales que cambiaron su voto\nen el Municipio Pachuca de Hidalgo en 2022",
          subtitle = "Del 2021 al 2022 y el partido al que fue su voto",
@@ -786,31 +770,6 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_Contorno_HIDALGO
        plot = mapa_Contorno_HIDALGO_PACHUCA, 
        width = 8.5, height = 11, units = "in", device = "pdf")
 
-
-# Crear un mapa con colores únicos para cada municipio
-mapa_Contornomun_PACHUCA <- ggplot() +
-    annotation_map_tile(type = "osm", zoom = 14) +
-    geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NOMBRE), color = "black", size = 0.1, alpha = 0.5) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2.5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
-    labs(title = "Municipios dentro del Municipio Pachuca",
-         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
-    theme_economist(base_family = "ITC Officina Sans") +
-    theme(legend.position = "null",
-          legend.text = element_text(size = 10, color = "#014d64"),
-          legend.title = element_blank(),
-          axis.text = element_blank(),
-          axis.title = element_blank(),
-          axis.line = element_blank(),
-          panel.background = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
-          plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
-          plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
-ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_Contornomun_PACHUCA.pdf", 
-       plot = mapa_Contornomun_PACHUCA, 
-       width = 8.5, height = 11, units = "in", device = "pdf")
-
 # Crear un mapa de los Distritos Locales
 mapa_ContornoDL_PACHUCA <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 14) +
@@ -836,6 +795,31 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_ContornoDL_PACHU
        plot = mapa_ContornoDL_PACHUCA, 
        width = 8.5, height = 11, units = "in", device = "pdf")
 
+# Crear un mapa de los Distritos Federales
+mapa_ContornoDF_PACHUCA <- ggplot() +
+    annotation_map_tile(type = "osm", zoom = 14) +
+    geom_sf(data = DISTRITOF_HIDALGO_PACHUCA, aes(fill = DISTRITO), color = "black", size = 0.1, alpha = 0.5) +
+    geom_sf_label(data = DISTRITOF_HIDALGO_PACHUCA, aes(label = DISTRITO), size = 5, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+    labs(title = "Intersección de los Distritos Federales con el",
+         subtitle = "Municipio Pachuca",
+         caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
+    theme_economist(base_family = "ITC Officina Sans") +
+    theme(legend.position = "null",
+          legend.text = element_text(size = 10, color = "#014d64"),
+          legend.title = element_blank(),
+          axis.text = element_blank(),
+          axis.title = element_blank(),
+          axis.line = element_blank(),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          plot.title = element_text(hjust = 0.5, size = 24, color = "#014d64", face = "bold"),
+          plot.caption = element_text(hjust = 0.5, size = 18, color = "#014d64", face = "bold"),
+          plot.subtitle = element_text(hjust = 0.5, size = 20, color = "#014d64", face = "bold"))
+ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_ContornoDF_PACHUCA.pdf", 
+       plot = mapa_ContornoDF_PACHUCA, 
+       width = 8.5, height = 11, units = "in", device = "pdf")
+
 
 #Mapa Marginación
 Mapa_Marginacion_PACHUCAC <- ggplot() +
@@ -843,7 +827,7 @@ Mapa_Marginacion_PACHUCAC <- ggplot() +
     geom_sf(data = Colonias_HIDALGO_PACHUCA, aes(fill = GM_2020), alpha = .7, color = NA) +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+
     scale_fill_manual(values = c("Muy bajo" = "#00FF00",  # Verde para "Muy bajo" (bueno)
                                  "Bajo" = "#66FF00",
                                  "Medio" = "#FFFF00",
@@ -883,7 +867,7 @@ Mapa_Sugerencia <- ggplot() +
     geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
-    geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
+
     scale_fill_manual(values = c("Sugerencia secundaria" = "darkblue",  "Sugerencia prioritaria" = "#FF0000", "NO" = "white"), name = "") +
     labs(title = "Sugerencias para giras en el Municipio Pachuca", x="", y="",
          subtitle = "Secciones que suman más del 75% de la lista nominal, hay alta participación y pueden cambiar de lealtar partidista",
@@ -897,7 +881,7 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Sugerencia(PACHU
 archivos <- c(
     "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_Contorno_HIDALGO_PACHUCA.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_ContornoDL_PACHUCA.pdf",  
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_Contornomun_PACHUCA.pdf", 
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_ContornoDF_PACHUCA.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_Resultados.pdf",
     "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_ResultadosG.pdf", 
     "D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\Mapa_FAM.pdf",
