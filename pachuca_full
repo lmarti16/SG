@@ -30,6 +30,11 @@ Colonias_HIDALGO <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
 datamun_Hidalgo <- read_sf("D:\\52556\\Documents\\Data_munHidalg.xlsx")
 sec_mex <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
 
+ResecG21 <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\ganador_21(resec).csv")
+ResecG21$ENTIDAD <- as.numeric(ResecG21$ENTIDAD)
+ResecG21$SECCION <- as.numeric(ResecG21$SECCION)
+
+
 #Creamos la División
 Data_SecHidalgo  <- filter(sec_mex, ENTIDAD == 13)
 Data_SecHidalgo <- st_drop_geometry(Data_SecHidalgo)
@@ -92,9 +97,14 @@ Lista_Nominal_Selected$ENTIDAD <- as.numeric(Lista_Nominal_Selected$ENTIDAD)
 
 Resultados_HIDALGO <- filter(Resultados, ENTIDAD == 13)
 
-Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Secciones_switchers, by = c("SECCION","ENTIDAD"))
-Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Lista_Nominal_Selected, by = c("SECCION","ENTIDAD"))
 Resultados_HIDALGO <- left_join(Resultados_gober, Resultados_HIDALGO, by = c("SECCION","ENTIDAD"))
+Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Lista_Nominal_Selected, by = c("SECCION","ENTIDAD"))
+Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Secciones_switchers, by = c("SECCION","ENTIDAD"))
+
+Resultados_HIDALGO <- Resultados_HIDALGO %>%
+    select(-GANADOR_21)
+
+Resultados_HIDALGO <- left_join(Resultados_HIDALGO, ResecG21, by = c("SECCION","ENTIDAD"))
 
 # Crear la columna "Traidores"
 Resultados_HIDALGO$Traidores <- ifelse(
@@ -831,7 +841,7 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\PACHUCA\\mapa_ContornoDL_PACHU
 Mapa_Marginacion_PACHUCAC <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 14) +
     geom_sf(data = Colonias_HIDALGO_PACHUCA, aes(fill = GM_2020), alpha = .7, color = NA) +
-    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
+    geom_sf(data = Secciones_HIDALGO_PACHUCA, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_PACHUCA, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
     geom_sf_label(data = Municipios_HIDALGO_PACHUCA, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
     scale_fill_manual(values = c("Muy bajo" = "#00FF00",  # Verde para "Muy bajo" (bueno)
