@@ -185,12 +185,12 @@ mapaHIDALGO_DF6$SUGERENCIA <- factor(mapaHIDALGO_DF6$SUGERENCIA,
 # Definir los colores para switchers
 colores_Switcher <- colorFactor(
     palette = c("white", "#4B0082"), 
-    levels = c("No", "SI")
+    levels = c("NO", "SI")
 )
 
 # Reordenar los niveles del factor switchers
 mapaHIDALGO_DF6$Switchers22 <- factor(mapaHIDALGO_DF6$Switchers22,
-                                           levels = c("No", "SI"))
+                                           levels = c("NO", "SI"))
 
 #MAPA CONSOLIDADD
 
