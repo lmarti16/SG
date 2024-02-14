@@ -127,10 +127,11 @@ mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
 # Corregir la definición de Sugerencia
 mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
     mutate(SUGERENCIA = case_when(
-        quintilLN == labels_custom(quintilesLN)[5] & quintilD == labels_custom(quintilesD)[5] & quintilparti == labels_custom(quintilesparti)[5] ~ "Sugerencia prioritaria",
-        (quintilLN %in% c(labels_custom(quintilesLN)[5], labels_custom(quintilesLN)[4]) & quintilD == labels_custom(quintilesD)[5] & quintilparti %in% c(labels_custom(quintilesparti)[5], labels_custom(quintilesparti)[4])) ~ "Sugerencia secundaria",
+        quintilLN == labels[5] & quintilD == labels[5] & quintilparti == labels[5] ~ "Sugerencia prioritaria",
+        (quintilLN %in% c(labels[5], labels[4]) & quintilD == labels[5] & quintilparti %in% c(labels[5], labels[4])) ~ "Sugerencia secundaria",
         TRUE ~ "NO"  # Asigna "NO" si ninguna de las condiciones se cumple
     ))
+
 
 mapaHIDALGO_DF6$Switchers22 <- ifelse(mapaHIDALGO_DF6$GANADO_G_22 == mapaHIDALGO_DF6$Ganador_21, "NO", "SI")
 
