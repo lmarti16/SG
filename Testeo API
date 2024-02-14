@@ -67,12 +67,6 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
 Resultados_HIDALGO <- Resultados_HIDALGO %>% 
     mutate(porcentajePRI = (PRI_22 / TOTAL_VOTOS_22) * 100)
 
-# Crear la columna "Switchers22"
-Resultados_HIDALGO$Switchers22 <- ifelse(
-  Resultados_HIDALGO$GANADO_G_22 ==  Resultados_HIDALGO$Ganador_21,
-  "NO",    
-    "SI"
-  )
 
 #armar el Distrito Federal
 Secciones_HIDALGO_DF6 <- filter(Secciones_HIDALGO, DISTRITO == 6)
@@ -132,13 +126,13 @@ mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
 
 # Corregir la definición de Sugerencia
 mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
-    mutate(Sugerencia = case_when(
+    mutate(SUGERENCIA = case_when(
         quintilLN == labels_custom(quintilesLN)[5] & quintilD == labels_custom(quintilesD)[5] & quintilparti == labels_custom(quintilesparti)[5] ~ "Sugerencia prioritaria",
         (quintilLN %in% c(labels_custom(quintilesLN)[5], labels_custom(quintilesLN)[4]) & quintilD == labels_custom(quintilesD)[5] & quintilparti %in% c(labels_custom(quintilesparti)[5], labels_custom(quintilesparti)[4])) ~ "Sugerencia secundaria",
         TRUE ~ "NO"  # Asigna "NO" si ninguna de las condiciones se cumple
     ))
 
-
+mapaHIDALGO_DF6$Switchers22 <- ifelse(mapaHIDALGO_DF6$GANADO_G_22 == mapaHIDALGO_DF6$Ganador_21, "NO", "SI")
 
 # Transformar sistema de coordenadas
 mapaHIDALGO_DF6 <- st_transform(mapaHIDALGO_DF6, crs = 4326)
@@ -153,7 +147,6 @@ colores_SUGERENCIA <- colorFactor(
     palette = c("red", "darkblue" ,"white"), 
     levels = c("Sugerencia prioritaria","Sugerencia secundaria", "NO")
 )
-
 
 # Definir los colores para cada nivel de competitividad
 colores_GANADOR_21 <- colorFactor(
@@ -279,7 +272,7 @@ mapa <- mapa %>%
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
                        "¿Es sección Switcher?:", Switchers22, "<br>",
                        "Coalición Ganadora:", GANADORG_C_22, "<br>",
-                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_22, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
                        "Partido preponderante en 2018:", Ganador_18, "<br>",
                        "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
@@ -314,7 +307,7 @@ mapa <- mapa %>%
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
                        "¿Es sección Switcher?:", Switchers22, "<br>",
                        "Coalición Ganadora:", GANADORG_C_22, "<br>",
-                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_22, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
                        "Partido preponderante en 2018:", Ganador_18, "<br>",
                        "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
@@ -350,7 +343,7 @@ mapa <- mapa %>%
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
                        "¿Es sección Switcher?:", Switchers22, "<br>",
                        "Coalición Ganadora:", GANADORG_C_22, "<br>",
-                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_22, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
                        "Partido preponderante en 2018:", Ganador_18, "<br>",
                        "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
@@ -385,7 +378,7 @@ mapa <- mapa %>%
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
                        "¿Es sección Switcher?:", Switchers22, "<br>",
                        "Coalición Ganadora:", GANADORG_C_22, "<br>",
-                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_22, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
                        "Partido preponderante en 2018:", Ganador_18, "<br>",
                        "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
@@ -420,7 +413,7 @@ mapa <- mapa %>%
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
                        "¿Es sección Switcher?:", Switchers22, "<br>",
                        "Coalición Ganadora:", GANADORG_C_22, "<br>",
-                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_22, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
                        "Partido preponderante en 2018:", Ganador_18, "<br>",
                        "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
