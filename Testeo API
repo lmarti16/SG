@@ -1,0 +1,515 @@
+
+
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(leaflet)
+library(rio)
+library(stringr)
+
+
+# Leer archivo SHP usando read_sf()
+Manzanas_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MANZANA.shp")
+Secciones_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\SECCION.shp")
+DistritoF_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_FEDERAL.shp")
+DistritoL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRITO_LOCAL.shp")
+ResultadosDF <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober(resec).csv")
+Lista_Nominal_Selected <- read_sf("D:\\52556\\Documents\\Nassar-oax\\Lista_Nominal_Selected.csv")
+Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
+Secciones_switchers <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Secciones_switchers.csv")
+
+
+Lista_Nominal_Selected  <- Lista_Nominal_Selected  %>%
+    mutate_at(vars(-c("NOMBRE_ENTIDAD", "Gene_prepo")),
+              as.numeric)
+
+# Convert all columns to numeric
+ResultadosDF[, -c(3,4,28,31)] <- lapply(ResultadosDF[, -c(3,4,28,31)], as.numeric)
+Secciones_switchers$SECCION <- as.numeric(Secciones_switchers$SECCION)
+Secciones_switchers$ENTIDAD <- as.numeric(Secciones_switchers$ENTIDAD)
+
+# Renombrar los resultados 
+ResultadosDF$GANADORG_C_22 <- recode(ResultadosDF$GANADORG_C_22,
+                                  "EMPATE" = "Empate",
+                                  "FAM_G" = "Frente Amplio por México",
+                                  "SHH_G" = "Juntos Hacemos Historia",
+                                  "MC" = "Movimiento Ciudadano")
+
+# Filtrar el dataframe Resultados por la columna ENTIDAD igual a 9
+Resultados_HIDALGO <- filter(ResultadosDF, ENTIDAD == 13)
+ListaN_HIDALGO <- filter(Lista_Nominal_Selected, ENTIDAD == 13)
+
+Resultados_HIDALGO <- left_join(Resultados_HIDALGO, ListaN_HIDALGO, by = c("SECCION","ENTIDAD"))
+Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Secciones_switchers, by = c("SECCION","ENTIDAD"))
+
+Resultados_HIDALGO <- Resultados_HIDALGO %>% 
+    mutate( porcentaje_FAM_22 = (FAM_G_22 /TOTAL_VOTOS_22)*100)
+
+Resultados_HIDALGO <- Resultados_HIDALGO %>% 
+    mutate( porcentaje_SHH_22 = (SHH_G_22 /TOTAL_VOTOS_22)*100)
+
+Resultados_HIDALGO <- Resultados_HIDALGO %>% 
+    mutate( diferencia = porcentaje_FAM_22 - porcentaje_SHH_22)
+
+Resultados_HIDALGO <- Resultados_HIDALGO %>% 
+    mutate(participacion = (TOTAL_VOTOS_22 / LISTA_NOMINAL_22) * 100)
+
+Resultados_HIDALGO <- Resultados_HIDALGO %>% 
+    mutate(porcentajePRI = (PRI_22 / TOTAL_VOTOS_22) * 100)
+
+# Crear la columna "Switchers22"
+Resultados_HIDALGO$Switchers22 <- ifelse(
+  Resultados_HIDALGO$GANADO_G_22 ==  Resultados_HIDALGO$Ganador_21,
+  "NO",    
+    "SI"
+  )
+
+#armar el Distrito Federal
+Secciones_HIDALGO_DF6 <- filter(Secciones_HIDALGO, DISTRITO == 6)
+Manzanas_HIDALGO_DF6 <- filter(Manzanas_HIDALGO, DISTRITO_F == 6)
+DistritoF_HIDALGO_DF6 <- filter(DistritoF_HIDALGO, DISTRITO == 6)
+
+# Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_HIDALGO_DF6
+Municipios_DF6 <- unique(Secciones_HIDALGO_DF6$MUNICIPIO)
+Valores_DL_DF6 <- unique(Secciones_HIDALGO_DF6$DISTRITO_L)
+
+# Filtrar Municipios_HIDALGO
+Municipios_HIDALGO_DF6 <- Municipios_HIDALGO[Municipios_HIDALGO$MUNICIPIO %in% Municipios_DF6, ]
+
+# Filtrar DistritoL_HIDALGO
+DistritoL_HIDALGO_DF6 <- DistritoL_HIDALGO[DistritoL_HIDALGO$DISTRITO_L %in% Valores_DL_DF6, ]
+
+mapaHIDALGO_DF6 <- left_join(Secciones_HIDALGO_DF6, Resultados_HIDALGO, by = c("SECCION", "ENTIDAD"))
+
+# Crear quintiles
+quintilesF <- quantile(mapaHIDALGO_DF6$porcentaje_FAM_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesM <- quantile(mapaHIDALGO_DF6$porcentaje_SHH_22, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesD <- quantile(mapaHIDALGO_DF6$diferencia, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesP <- quantile(mapaHIDALGO_DF6$porcentajePRI, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesparti <- quantile(mapaHIDALGO_DF6$participacion,  probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesLN <- quantile(mapaHIDALGO_DF6$LISTA_NOMINAL,  probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+
+# Asignar etiquetas automáticamente
+labels <- c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad")
+
+# Agrega columna con quintiles y etiquetas
+mapaHIDALGO_DF6$quintilF <- cut(mapaHIDALGO_DF6$porcentaje_FAM_22, breaks = quintilesF, labels = labels, include.lowest = TRUE)
+mapaHIDALGO_DF6$quintilM <- cut(mapaHIDALGO_DF6$porcentaje_SHH_22, breaks = quintilesM, labels = labels, include.lowest = TRUE)
+mapaHIDALGO_DF6$quintilD <- cut(mapaHIDALGO_DF6$diferencia, breaks = quintilesD, labels = labels, include.lowest = TRUE)
+mapaHIDALGO_DF6$quintilP <- cut(mapaHIDALGO_DF6$porcentajePRI, breaks = quintilesD, labels = labels, include.lowest = TRUE)
+mapaHIDALGO_DF6$quintilparti <- cut(mapaHIDALGO_DF6$participacion, breaks = quintilesparti, labels = labels, include.lowest = TRUE)
+mapaHIDALGO_DF6$quintilLN <- cut(mapaHIDALGO_DF6$LISTA_NOMINAL, breaks = quintilesLN, labels = labels, include.lowest = TRUE)
+
+# Crear la nueva columna CompetitividadD
+mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
+    mutate(CompetitividadD = case_when(
+        quintilD == labels[1] ~ "Muy poca Competitividad",
+        quintilD == labels[2] ~ "Poca Competitividad",
+        quintilD == labels[3] ~ "Competitividad media",
+        quintilD == labels[4] ~ "Alta Competitividad",
+        quintilD == labels[5] ~ "Muy alta Competitividad"
+    ))
+
+# Crear la nueva columna CompetitividadP
+mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
+    mutate(CompetitividadP = case_when(
+        quintilF == labels[1] ~ "Muy poca Competitividad",
+        quintilF == labels[2] ~ "Poca Competitividad",
+        quintilF == labels[3] ~ "Competitividad media",
+        quintilF == labels[4] ~ "Alta Competitividad",
+        quintilF == labels[5] ~ "Muy alta Competitividad"
+    ))
+
+# Corregir la definición de Sugerencia
+mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
+    mutate(Sugerencia = case_when(
+        quintilLN == labels_custom(quintilesLN)[5] & quintilD == labels_custom(quintilesD)[5] & quintilparti == labels_custom(quintilesparti)[5] ~ "Sugerencia prioritaria",
+        (quintilLN %in% c(labels_custom(quintilesLN)[5], labels_custom(quintilesLN)[4]) & quintilD == labels_custom(quintilesD)[5] & quintilparti %in% c(labels_custom(quintilesparti)[5], labels_custom(quintilesparti)[4])) ~ "Sugerencia secundaria",
+        TRUE ~ "NO"  # Asigna "NO" si ninguna de las condiciones se cumple
+    ))
+
+
+
+# Transformar sistema de coordenadas
+mapaHIDALGO_DF6 <- st_transform(mapaHIDALGO_DF6, crs = 4326)
+Secciones_HIDALGO_DF6 <- st_transform(Secciones_HIDALGO_DF6, crs = 4326)
+Manzanas_HIDALGO_DF6 <- st_transform(Manzanas_HIDALGO_DF6, crs = 4326)
+DistritoF_HIDALGO_DF6 <- st_transform(DistritoF_HIDALGO_DF6, crs = 4326)
+Municipios_HIDALGO_DF6 <- st_transform(Municipios_HIDALGO_DF6, crs = 4326)
+DistritoL_HIDALGO_DF6 <- st_transform(DistritoL_HIDALGO_DF6, crs = 4326)
+
+# Definir los colores para cada nivel de competitividad
+colores_SUGERENCIA <- colorFactor(
+    palette = c("red", "darkblue" ,"white"), 
+    levels = c("Sugerencia prioritaria","Sugerencia secundaria", "NO")
+)
+
+
+# Definir los colores para cada nivel de competitividad
+colores_GANADOR_21 <- colorFactor(
+    palette = c("purple", "brown", "darkblue"), 
+    levels = c("Empate", "Juntos Hacemos Historia", "Frente Amplio por México")
+)
+
+# Definir los colores para cada nivel de competitividad
+colores_CompetitividadP <- colorFactor(
+    palette = c("#66BD63", "#e5be01", "#006837", "#A50026", "#F46D43"), 
+    domain = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad")
+)
+
+# Definir los colores para cada nivel de competitividad
+colores_CompetitividadD <- colorFactor(
+    palette = c("#66BD63", "#e5be01", "#006837", "#A50026", "#F46D43"), 
+    domain = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad")
+)
+
+# Reordenar los niveles del factor GANADOR_21
+mapaHIDALGO_DF6$GANADOR_21 <- factor(mapaHIDALGO_DF6$GANADORG_C_22,
+                                   levels = c("Juntos Hacemos Historia", "Frente Amplio por México", "Movimiento Ciudadano","Empate"))
+
+# Reordenar los niveles del factor CompetitividadD
+mapaHIDALGO_DF6$CompetitividadD <- factor(mapaHIDALGO_DF6$CompetitividadD,
+                                        levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
+
+# Reordenar los niveles del factor CompetitividadD
+mapaHIDALGO_DF6$CompetitividadP <- factor(mapaHIDALGO_DF6$CompetitividadP,
+                                        levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
+
+# Reordenar los niveles del factor CompetitividadD
+mapaHIDALGO_DF6$SUGERENCIA <- factor(mapaHIDALGO_DF6$SUGERENCIA,
+                                        levels = c("Sugerencia prioritaria","Sugerencia secundaria", "NO"))
+
+# Definir los colores para switchers
+colores_Switcher <- colorFactor(
+    palette = c("white", "#4B0082"), 
+    levels = c("No", "SI")
+)
+
+# Reordenar los niveles del factor switchers
+mapaHIDALGO_DF6$Switchers22 <- factor(mapaHIDALGO_DF6$Switchers22,
+                                           levels = c("No", "SI"))
+
+#MAPA CONSOLIDADD
+
+# Crear un mapa base con el fondo de OpenStreetMap
+mapa <- leaflet() %>%
+    addProviderTiles(provider = "OpenStreetMap")
+
+# Agregar la primera capa de polígonos de manzanas
+mapa <- mapa %>%
+    addPolygons(
+        data = Manzanas_HIDALGO_DF6,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~SECCION,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Manzanas"     # Nombre del grupo de la capa
+    )
+
+# Agregar la  capa de polígonos a nivel de Secciones
+mapa <- mapa %>%
+    addPolygons(
+        data = Secciones_HIDALGO_DF6,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~SECCION,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Secciones"     # Nombre del grupo de la capa
+    )
+# Agregar la  capa de polígonos a nivel municipios
+mapa <- mapa %>%
+    addPolygons(
+        data = Municipios_HIDALGO_DF6,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~NOMBRE,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Municipios"     # Nombre del grupo de la capa
+    )
+# Agregar la segunda capa de Distritos Locales
+mapa <- mapa %>%
+    addPolygons(
+        data = DistritoF_HIDALGO_DF6,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~DISTRITO,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Distrito Federal"     # Nombre del grupo de la capa
+    )
+
+mapa <- mapa %>%
+    addPolygons(
+        data = DistritoL_HIDALGO_DF6,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~DISTRITO_L,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Distrito Local"     # Nombre del grupo de la capa
+    )
+
+# Agregar la  capa de polígonos con los datos de mapaHIDALGO_DF6 y el color según el GANADOR_21
+mapa <- mapa %>%
+    addPolygons(
+        data = mapaHIDALGO_DF6,
+        fillColor = ~colores_Switcher(Switchers22),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Es sección Switcher?:", Switchers22, "<br>",
+                       "Coalición Ganadora:", GANADORG_C_22, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
+                       "Competitividad de la Sección PRI:", CompetitividadP, "<br>",
+                       "Votos por el FAM:", FAM_G_22, "<br>",
+                       "Porcentaje de votos por el FAM:", paste(round(porcentaje_FAM_22, 2), "%"), "<br>",
+                       "Votos por JHH:", SHH_G_22, "<br>",
+                       "Porcentaje de votos por JHH:", paste(round(porcentaje_SHH_22, 2), "%"), "<br>",
+                       "Votos Nulos:", NUM_VOTOS_VALIDOS, "<br>",
+                       "Población Generación Z(18-24 años):", GEN_Z_TOTAL, "<br>",
+                       "Porcentaje de Generación Z:", paste(round(GEN_Z_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Millennials(25-39 años):", MILLENNIALS_TOTAL, "<br>",
+                       "Porcentaje de Millennials:", paste(round(MILLENNIALS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Generación X(40-54 años):", GEN_X_TOTAL, "<br>",
+                       "Porcentaje de Generación X:", paste(round(GEN_X_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Baby Boomers(55-65 años):", BOOMERS_TOTAL, "<br>",
+                       "Porcentaje de Baby Boomers:", paste(round(BOOMERS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
+                       "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL),
+        group = "Switchers"       # Nombre del grupo de la capa
+    ) 
+# Agregar la tercer capa de polígonos con los datos de mapaHIDALGO_DF6 y el color según el Switcher_coalición
+mapa <- mapa %>%
+    addPolygons(
+        data = mapaHIDALGO_DF6,
+        fillColor = ~colores_GANADOR_21(GANADOR_21),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Es sección Switcher?:", Switchers22, "<br>",
+                       "Coalición Ganadora:", GANADORG_C_22, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
+                       "Competitividad de la Sección PRI:", CompetitividadP, "<br>",
+                       "Votos por el FAM:", FAM_G_22, "<br>",
+                       "Porcentaje de votos por el FAM:", paste(round(porcentaje_FAM_22, 2), "%"), "<br>",
+                       "Votos por JHH:", SHH_G_22, "<br>",
+                       "Porcentaje de votos por JHH:", paste(round(porcentaje_SHH_22, 2), "%"), "<br>",
+                       "Votos Nulos:", NUM_VOTOS_VALIDOS, "<br>",
+                       "Población Generación Z(18-24 años):", GEN_Z_TOTAL, "<br>",
+                       "Porcentaje de Generación Z:", paste(round(GEN_Z_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Millennials(25-39 años):", MILLENNIALS_TOTAL, "<br>",
+                       "Porcentaje de Millennials:", paste(round(MILLENNIALS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Generación X(40-54 años):", GEN_X_TOTAL, "<br>",
+                       "Porcentaje de Generación X:", paste(round(GEN_X_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Baby Boomers(55-65 años):", BOOMERS_TOTAL, "<br>",
+                       "Porcentaje de Baby Boomers:", paste(round(BOOMERS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
+                       "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL),
+        group = "Coalición Ganadora"       # Nombre del grupo de la capa
+    ) 
+
+# Agregar la tercer capa de polígonos con los datos de mapaHIDALGO_DF6 y el color según el sugerencia
+mapa <- mapa %>%
+    addPolygons(
+        data = mapaHIDALGO_DF6,
+        fillColor = ~colores_SUGERENCIA(SUGERENCIA),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Es sección Switcher?:", Switchers22, "<br>",
+                       "Coalición Ganadora:", GANADORG_C_22, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
+                       "Competitividad de la Sección PRI:", CompetitividadP, "<br>",
+                       "Votos por el FAM:", FAM_G_22, "<br>",
+                       "Porcentaje de votos por el FAM:", paste(round(porcentaje_FAM_22, 2), "%"), "<br>",
+                       "Votos por JHH:", SHH_G_22, "<br>",
+                       "Porcentaje de votos por JHH:", paste(round(porcentaje_SHH_22, 2), "%"), "<br>",
+                       "Votos Nulos:", NUM_VOTOS_VALIDOS, "<br>",
+                       "Población Generación Z(18-24 años):", GEN_Z_TOTAL, "<br>",
+                       "Porcentaje de Generación Z:", paste(round(GEN_Z_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Millennials(25-39 años):", MILLENNIALS_TOTAL, "<br>",
+                       "Porcentaje de Millennials:", paste(round(MILLENNIALS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Generación X(40-54 años):", GEN_X_TOTAL, "<br>",
+                       "Porcentaje de Generación X:", paste(round(GEN_X_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Baby Boomers(55-65 años):", BOOMERS_TOTAL, "<br>",
+                       "Porcentaje de Baby Boomers:", paste(round(BOOMERS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
+                       "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL),
+        group = "Sugerencia"       # Nombre del grupo de la capa
+    ) 
+# Agregar la quinta capa de polígonos con los datos de mapaHIDALGO_DF6 y el color según la competitividad
+mapa <- mapa %>%
+    addPolygons(
+        data = mapaHIDALGO_DF6,
+        fillColor = ~colores_CompetitividadD(CompetitividadD),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Es sección Switcher?:", Switchers22, "<br>",
+                       "Coalición Ganadora:", GANADORG_C_22, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
+                       "Competitividad de la Sección PRI:", CompetitividadP, "<br>",
+                       "Votos por el FAM:", FAM_G_22, "<br>",
+                       "Porcentaje de votos por el FAM:", paste(round(porcentaje_FAM_22, 2), "%"), "<br>",
+                       "Votos por JHH:", SHH_G_22, "<br>",
+                       "Porcentaje de votos por JHH:", paste(round(porcentaje_SHH_22, 2), "%"), "<br>",
+                       "Votos Nulos:", NUM_VOTOS_VALIDOS, "<br>",
+                       "Población Generación Z(18-24 años):", GEN_Z_TOTAL, "<br>",
+                       "Porcentaje de Generación Z:", paste(round(GEN_Z_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Millennials(25-39 años):", MILLENNIALS_TOTAL, "<br>",
+                       "Porcentaje de Millennials:", paste(round(MILLENNIALS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Generación X(40-54 años):", GEN_X_TOTAL, "<br>",
+                       "Porcentaje de Generación X:", paste(round(GEN_X_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Baby Boomers(55-65 años):", BOOMERS_TOTAL, "<br>",
+                       "Porcentaje de Baby Boomers:", paste(round(BOOMERS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
+                       "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL),
+        group = "Competitividad"       # Nombre del grupo de la capa
+    ) 
+
+mapa <- mapa %>%
+    addPolygons(
+        data = mapaHIDALGO_DF6,
+        fillColor = ~colores_CompetitividadP(CompetitividadP),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Es sección Switcher?:", Switchers22, "<br>",
+                       "Coalición Ganadora:", GANADORG_C_22, "<br>",
+                       "Partido preponderante en 2022:", GANADO_G_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
+                       "Competitividad de la Sección PRI:", CompetitividadP, "<br>",
+                       "Votos por el FAM:", FAM_G_22, "<br>",
+                       "Porcentaje de votos por el FAM:", paste(round(porcentaje_FAM_22, 2), "%"), "<br>",
+                       "Votos por JHH:", SHH_G_22, "<br>",
+                       "Porcentaje de votos por JHH:", paste(round(porcentaje_SHH_22, 2), "%"), "<br>",
+                       "Votos Nulos:", NUM_VOTOS_VALIDOS, "<br>",
+                       "Población Generación Z(18-24 años):", GEN_Z_TOTAL, "<br>",
+                       "Porcentaje de Generación Z:", paste(round(GEN_Z_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Millennials(25-39 años):", MILLENNIALS_TOTAL, "<br>",
+                       "Porcentaje de Millennials:", paste(round(MILLENNIALS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Generación X(40-54 años):", GEN_X_TOTAL, "<br>",
+                       "Porcentaje de Generación X:", paste(round(GEN_X_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Baby Boomers(55-65 años):", BOOMERS_TOTAL, "<br>",
+                       "Porcentaje de Baby Boomers:", paste(round(BOOMERS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
+                       "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL),
+        group = "Competitividad PRI"       # Nombre del grupo de la capa
+    )
+
+# Agregar el control de capas al mapa
+mapa <- mapa %>%
+    addLayersControl(
+        baseGroups = c("Manzanas", "Secciones", "Municipios","Distrito Local","Distrito Federal" ,"AGEB"),
+        overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PRI", "Switchers", "Sugerencia"),
+        options = layersControlOptions(collapsed = FALSE)
+    )
+
+# Agregar las leyendas al mapa
+mapa <- mapa %>%
+    addLegend(
+        data = mapaHIDALGO_DF6,
+        pal = colores_GANADOR_21, # Establecer los colores de la leyenda usando colores
+        values = ~GANADORG_C_22, # Establecer los valores de la leyenda
+        title = "Ganador de la última elección", # Establecer el título de la leyenda
+        position = "bottomleft",
+        layerId = "LeyendaGANADOR_22",
+        group = "Coalición Ganadora"  # Grupo de la leyenda
+    ) %>%
+    addLegend(
+        data = mapaHIDALGO_DF6,
+        pal = colores_CompetitividadD, # Establecer los colores de la leyenda usando colores
+        values = ~CompetitividadD, # Establecer los valores de la leyenda
+        title = "Competitividad Electoral de Fuerza & Corazón",
+        position = "bottomleft",
+        layerId = "LeyendaCompetitividad",
+        group = "Competitividad"  # Grupo de la leyenda
+    ) %>%
+    addLegend(
+        data = mapaHIDALGO_DF6,
+        pal = colores_CompetitividadP, # Establecer los colores de la leyenda usando colores
+        values = ~CompetitividadP, # Establecer los valores de la leyenda
+        title = "Competitividad Electoral del PRI",
+        position = "bottomleft",
+        layerId = "LeyendaPRI",
+        group = "Competitividad PRI"  # Grupo de la leyenda
+    ) %>%
+    addLegend(
+        data = mapaHIDALGO_DF6,
+        pal = colores_Switcher, # Establecer los colores de la leyenda usando colores
+        values = ~Switchers22, # Establecer los valores de la leyenda
+        title = "Secciones Switchers",
+        position = "bottomleft",
+        layerId = "LeyendaSwitcher",
+        group = "Switchers"  # Grupo de la leyenda
+    ) %>%
+    addLegend(
+        data = mapaHIDALGO_DF6,
+        pal = colores_SUGERENCIA, # Establecer los colores de la leyenda usando colores
+        values = ~SUGERENCIA, # Establecer los valores de la leyenda
+        title = "Secciones Sugeridas",
+        position = "bottomleft",
+        layerId = "LeyendaSugerencia",
+        group = "Sugerencia"  # Grupo de la leyenda
+    )
+
+# Agregar el control de HTML al mapa
+mapa <- mapa %>%
+    addControl(
+        html = "<div style='margin-bottom: 10px; text-align: center;'>
+                Distrito Federal 6 de la HIDALGO<br>
+                Elaborado por Qualia: Asesoria Especializada<br>
+                Con datos del INE y el INEGI
+            </div>",
+        position = "bottomright"
+    )
+
+# Mostrar el mapa
+mapa
