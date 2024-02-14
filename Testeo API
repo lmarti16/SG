@@ -223,9 +223,6 @@ colores_Switcher <- colorFactor(
 mapaHIDALGO_DF6$Switchers22 <- factor(mapaHIDALGO_DF6$Switchers22,
                                       levels = c("NO", "SI"))
 
-paletteParticipacion <- colorBin(palette = "Blues", domain = mapaHIDALGO_DF6$participacion, bins = 5, na.color = "transparent")
-paletteListaNominal <- colorBin(palette = "Greens", domain = mapaHIDALGO_DF6$LISTA_NOMINAL, bins = 5, na.color = "transparent")
-
 # Definir la paleta de colores para participación
 colores_participacion <- colorNumeric(
   palette = "YlGnBu", # Usa cualquier paleta de colores que prefieras
@@ -233,16 +230,33 @@ colores_participacion <- colorNumeric(
   na.color = "transparent" # Color para valores NA
 )
 
-# Asegúrate de que la función formatearRangos esté definida correctamente
-formatearRangos <- function(quintiles) {
-  paste0(
-    "Muy baja: <", round(quintiles[2], 2), "%\n",
-    "Baja: [", round(quintiles[2], 2), "% - ", round(quintiles[3], 2), "%)\n",
-    "Media: [", round(quintiles[3], 2), "% - ", round(quintiles[4], 2), "%)\n",
-    "Alta: [", round(quintiles[4], 2), "% - ", round(quintiles[5], 2), "%)\n",
-    "Muy alta: >=", round(quintiles[5], 2), "%"
-  )
-}
+# Definir la paleta de colores para participación
+colores_LN<- colorNumeric(
+  palette = "YlOrBr", # Usa cualquier paleta de colores que prefieras
+  domain = mapaHIDALGO_DF6$LISTA_NOMINAL, # Establece el dominio de valores a tu columna de participación
+  na.color = "transparent" # Color para valores NA
+)
+
+# Crear texto para la leyenda de participación
+textoLeyendaParticipacion <- paste(
+  "Muy baja: <", round(rangosQuintiles$parti[2], 2), "%",
+  "Baja: [", round(rangosQuintiles$parti[2], 2), "% - ", round(rangosQuintiles$parti[3], 2), "%)",
+  "Media: [", round(rangosQuintiles$parti[3], 2), "% - ", round(rangosQuintiles$parti[4], 2), "%)",
+  "Alta: [", round(rangosQuintiles$parti[4], 2), "% - ", round(rangosQuintiles$parti[5], 2), "%)",
+  "Muy alta: >=", round(rangosQuintiles$parti[5], 2), "%",
+  sep = "<br>"
+)
+
+# Crear texto para la leyenda de lista nominal
+textoLeyendaListaNominal <- paste(
+  "Muy pequeña: <", rangosQuintiles$LN[2],
+  "Pequeña: [", rangosQuintiles$LN[2], "-", rangosQuintiles$LN[3], ")",
+  "Mediana: [", rangosQuintiles$LN[3], "-", rangosQuintiles$LN[4], ")",
+  "Grande: [", rangosQuintiles$LN[4], "-", rangosQuintiles$LN[5], ")",
+  "Muy grande: >=", rangosQuintiles$LN[5],
+  sep = "<br>"
+)
+
 
 # Crear un mapa base con el fondo de OpenStreetMap
 mapa <- leaflet() %>%
@@ -504,7 +518,7 @@ mapa <- mapa %>%
 mapa <- mapa %>%
     addPolygons(
         data = mapaHIDALGO_DF6,
-        fillColor = ~paletteListaNominal(LISTA_NOMINAL),
+        fillColor = ~colores_LN(LISTA_NOMINAL),
         fillOpacity = 0.8,
         color = "white",
         weight = 1,
@@ -572,7 +586,16 @@ mapa <- mapa %>%
         position = "bottomleft",
         layerId = "LeyendaSugerencia",
         group = "Sugerencia"  # Grupo de la leyenda
-    ) 
+    )  %>%
+  addLegend(
+    position = "bottomright",
+    title = "Participación Electoral",
+    labels = c("Muy baja", "Baja", "Media", "Alta", "Muy alta"),
+    colors = colores_participacion(c(0, 20, 40, 60, 80, 100)), # Ajusta según tu paleta
+    opacity = 1,
+    labFormat = labelFormat(prefix = ""),
+    layerId = "LeyendaParticipacion"
+  ) 
 
 # Agregar el control de HTML al mapa
 mapa <- mapa %>%
