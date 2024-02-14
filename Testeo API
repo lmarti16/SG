@@ -104,6 +104,16 @@ mapaHIDALGO_DF6$quintilP <- cut(mapaHIDALGO_DF6$porcentajePRI, breaks = quintile
 mapaHIDALGO_DF6$quintilparti <- cut(mapaHIDALGO_DF6$participacion, breaks = quintilesparti, labels = labels, include.lowest = TRUE)
 mapaHIDALGO_DF6$quintilLN <- cut(mapaHIDALGO_DF6$LISTA_NOMINAL, breaks = quintilesLN, labels = labels, include.lowest = TRUE)
 
+# Nota: Se crea un listado de rangos para cada métrica.
+rangosQuintiles <- list(
+  F = quintilesF,
+  M = quintilesM,
+  D = quintilesD,
+  P = quintilesP,
+  parti = quintilesparti,
+  LN = quintilesLN
+)
+
 # Crear la nueva columna CompetitividadD
 mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
     mutate(CompetitividadD = case_when(
@@ -213,7 +223,26 @@ colores_Switcher <- colorFactor(
 mapaHIDALGO_DF6$Switchers22 <- factor(mapaHIDALGO_DF6$Switchers22,
                                       levels = c("NO", "SI"))
 
-#MAPA CONSOLIDADD
+paletteParticipacion <- colorBin(palette = "Blues", domain = mapaHIDALGO_DF6$participacion, bins = 5, na.color = "transparent")
+paletteListaNominal <- colorBin(palette = "Greens", domain = mapaHIDALGO_DF6$LISTA_NOMINAL, bins = 5, na.color = "transparent")
+
+# Definir la paleta de colores para participación
+colores_participacion <- colorNumeric(
+  palette = "YlGnBu", # Usa cualquier paleta de colores que prefieras
+  domain = mapaHIDALGO_DF6$participacion, # Establece el dominio de valores a tu columna de participación
+  na.color = "transparent" # Color para valores NA
+)
+
+# Asegúrate de que la función formatearRangos esté definida correctamente
+formatearRangos <- function(quintiles) {
+  paste0(
+    "Muy baja: <", round(quintiles[2], 2), "%\n",
+    "Baja: [", round(quintiles[2], 2), "% - ", round(quintiles[3], 2), "%)\n",
+    "Media: [", round(quintiles[3], 2), "% - ", round(quintiles[4], 2), "%)\n",
+    "Alta: [", round(quintiles[4], 2), "% - ", round(quintiles[5], 2), "%)\n",
+    "Muy alta: >=", round(quintiles[5], 2), "%"
+  )
+}
 
 # Crear un mapa base con el fondo de OpenStreetMap
 mapa <- leaflet() %>%
@@ -458,11 +487,42 @@ mapa <- mapa %>%
         group = "Competitividad PRI"       # Nombre del grupo de la capa
     )
 
+# Agregar capa de polígonos para Participación
+mapa <- mapa %>%
+  addPolygons(
+    data = mapaHIDALGO_DF6,
+    fillColor = ~colores_participacion(participacion),
+    popup = ~paste(
+      "Participación: ", round(participacion, 2), "%",
+      "\nRangos de Participación:\n", formatearRangos(rangosQuintiles$parti)
+    ),
+    group = "Participación"
+  )
+
+
+# Agregar capa de polígonos para Lista Nominal
+mapa <- mapa %>%
+    addPolygons(
+        data = mapaHIDALGO_DF6,
+        fillColor = ~paletteListaNominal(LISTA_NOMINAL),
+        fillOpacity = 0.8,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Lista Nominal:", LISTA_NOMINAL,
+                       "<br>Rangos de Lista Nominal:<br>",
+                       "Muy pequeña: hasta el primer quintil<br>",
+                       "Pequeña: entre el primer y segundo quintil<br>",
+                       "Mediana: entre el segundo y tercer quintil<br>",
+                       "Grande: entre el tercer y cuarto quintil<br>",
+                       "Muy grande: más del cuarto quintil"),
+        group = "Lista Nominal"
+    )
+
 # Agregar el control de capas al mapa
 mapa <- mapa %>%
     addLayersControl(
         baseGroups = c("Manzanas", "Secciones", "Municipios","Distrito Local","Distrito Federal" ,"AGEB"),
-        overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PRI", "Switchers", "Sugerencia"),
+        overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PRI", "Switchers", "Sugerencia","Participación", "Lista Nominal"),
         options = layersControlOptions(collapsed = FALSE)
     )
 
@@ -512,7 +572,7 @@ mapa <- mapa %>%
         position = "bottomleft",
         layerId = "LeyendaSugerencia",
         group = "Sugerencia"  # Grupo de la leyenda
-    )
+    ) 
 
 # Agregar el control de HTML al mapa
 mapa <- mapa %>%
