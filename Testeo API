@@ -40,10 +40,10 @@ Secciones_switchers$ENTIDAD <- as.numeric(Secciones_switchers$ENTIDAD)
 
 # Renombrar los resultados 
 ResultadosDF$GANADORG_C_22 <- recode(ResultadosDF$GANADORG_C_22,
-                                  "EMPATE" = "Empate",
-                                  "FAM_G" = "Frente Amplio por México",
-                                  "SHH_G" = "Juntos Hacemos Historia",
-                                  "MC" = "Movimiento Ciudadano")
+                                     "EMPATE" = "Empate",
+                                     "FAM_G" = "Frente Amplio por México",
+                                     "SHH_G" = "Juntos Hacemos Historia",
+                                     "MC" = "Movimiento Ciudadano")
 
 # Filtrar el dataframe Resultados por la columna ENTIDAD igual a 9
 Resultados_HIDALGO <- filter(ResultadosDF, ENTIDAD == 13)
@@ -124,12 +124,25 @@ mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
         quintilF == labels[5] ~ "Muy alta Competitividad"
     ))
 
-# Corregir la definición de Sugerencia
+# Asignar sugerencias basadas en competitividad, participación y lista nominal
 mapaHIDALGO_DF6 <- mapaHIDALGO_DF6 %>%
     mutate(SUGERENCIA = case_when(
-        quintilLN == labels[5] & quintilD == labels[5] & quintilparti == labels[5] ~ "Sugerencia prioritaria",
-        (quintilLN %in% c(labels[5], labels[4]) & quintilD == labels[5] & quintilparti %in% c(labels[5], labels[4])) ~ "Sugerencia secundaria",
-        TRUE ~ "NO"  # Asigna "NO" si ninguna de las condiciones se cumple
+        # Alta prioridad: Alta competitividad y alta participación en listas nominales grandes
+        CompetitividadD == "Muy alta Competitividad" & quintilparti == labels[5] & quintilLN == labels[5] ~ "Prioridad Alta: Focalizar esfuerzos",
+        CompetitividadP == "Muy alta Competitividad" & quintilparti == labels[5] & quintilLN == labels[5] ~ "Prioridad Alta: Focalizar esfuerzos",
+        
+        # Media prioridad: Alta o media competitividad y participación media en listas nominales medianas a grandes
+        (CompetitividadD %in% c("Alta Competitividad", "Competitividad media") | CompetitividadP %in% c("Alta Competitividad", "Competitividad media")) & 
+            quintilparti %in% c(labels[4], labels[3]) & 
+            quintilLN %in% c(labels[4], labels[3], labels[5]) ~ "Prioridad Media: Considerar esfuerzos",
+        
+        # Baja prioridad: Competitividad baja a media y baja participación, sin importar tamaño de lista nominal
+        (CompetitividadD %in% c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media") | 
+             CompetitividadP %in% c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media")) & 
+            quintilparti %in% c(labels[1], labels[2]) ~ "Prioridad Baja: Esfuerzos limitados",
+        
+        # Por defecto: Otras condiciones
+        TRUE ~ "Evaluar caso por caso"
     ))
 
 
@@ -143,11 +156,17 @@ DistritoF_HIDALGO_DF6 <- st_transform(DistritoF_HIDALGO_DF6, crs = 4326)
 Municipios_HIDALGO_DF6 <- st_transform(Municipios_HIDALGO_DF6, crs = 4326)
 DistritoL_HIDALGO_DF6 <- st_transform(DistritoL_HIDALGO_DF6, crs = 4326)
 
-# Definir los colores para cada nivel de competitividad
+# Definir los colores para cada nivel de sugerencia
 colores_SUGERENCIA <- colorFactor(
-    palette = c("red", "darkblue" ,"white"), 
-    levels = c("Sugerencia prioritaria","Sugerencia secundaria", "NO")
+    palette = c("red", "yellow", "green", "white"), 
+    levels = c("Prioridad Alta: Focalizar esfuerzos", "Prioridad Media: Considerar esfuerzos", "Prioridad Baja: Esfuerzos limitados", "Evaluar caso por caso")
 )
+
+# Reordenar los niveles del factor SUGERENCIA en el dataframe mapaHIDALGO_DF6
+mapaHIDALGO_DF6$SUGERENCIA <- factor(mapaHIDALGO_DF6$SUGERENCIA,
+                                     levels = c("Prioridad Alta: Focalizar esfuerzos", "Prioridad Media: Considerar esfuerzos", "Prioridad Baja: Esfuerzos limitados", "Evaluar caso por caso")
+)
+
 
 # Definir los colores para cada nivel de competitividad
 colores_GANADOR_21 <- colorFactor(
@@ -169,19 +188,20 @@ colores_CompetitividadD <- colorFactor(
 
 # Reordenar los niveles del factor GANADOR_21
 mapaHIDALGO_DF6$GANADOR_21 <- factor(mapaHIDALGO_DF6$GANADORG_C_22,
-                                   levels = c("Juntos Hacemos Historia", "Frente Amplio por México", "Movimiento Ciudadano","Empate"))
+                                     levels = c("Juntos Hacemos Historia", "Frente Amplio por México", "Movimiento Ciudadano","Empate"))
 
 # Reordenar los niveles del factor CompetitividadD
 mapaHIDALGO_DF6$CompetitividadD <- factor(mapaHIDALGO_DF6$CompetitividadD,
-                                        levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
+                                          levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
 
 # Reordenar los niveles del factor CompetitividadD
 mapaHIDALGO_DF6$CompetitividadP <- factor(mapaHIDALGO_DF6$CompetitividadP,
-                                        levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
+                                          levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
 
-# Reordenar los niveles del factor CompetitividadD
+# Reordenar los niveles del factor SUGERENCIA en el dataframe mapaHIDALGO_DF6
 mapaHIDALGO_DF6$SUGERENCIA <- factor(mapaHIDALGO_DF6$SUGERENCIA,
-                                        levels = c("Sugerencia prioritaria","Sugerencia secundaria", "NO"))
+                                     levels = c("Prioridad Alta: Focalizar esfuerzos", "Prioridad Media: Considerar esfuerzos", "Prioridad Baja: Esfuerzos limitados", "Evaluar caso por caso")
+)
 
 # Definir los colores para switchers
 colores_Switcher <- colorFactor(
@@ -191,7 +211,7 @@ colores_Switcher <- colorFactor(
 
 # Reordenar los niveles del factor switchers
 mapaHIDALGO_DF6$Switchers22 <- factor(mapaHIDALGO_DF6$Switchers22,
-                                           levels = c("NO", "SI"))
+                                      levels = c("NO", "SI"))
 
 #MAPA CONSOLIDADD
 
