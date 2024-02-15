@@ -1,0 +1,246 @@
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(stringr)
+library(rio)
+
+secciones_24 <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
+Resultados_21 <- read_sf("D:\\Descargas\\DIPUTACIONES_FED_MR_2021\\DIPUTACIONES_FED_MR_2021\\2021_SEE_DIP_FED_MR_NAL_SEC.csv")
+Resultados_18 <- read_sf("D:\\Descargas\\DIPUTACIONES_FED_MR_2018\\DIPUTACIONES_FED_MR_2018\\2018_SEE_DIP_FED_MR_NAL_SEC.csv")
+Resultados_15 <- read_sf("D:\\Descargas\\Descargas\\DIPUTACIONES_FED_MR_2015\\DIPUTACIONES_FED_MR_2015\\2015_SEE_DIP_FED_MR_NAL_SEC.csv")
+Resultados_12 <- read_sf("D:\\Descargas\\DIPUTACIONES_FED_MR_2012\\DIPUTACIONES_FED_MR_2012\\2012_SEE_DIP_FED_MR_NAL_SEC.csv")
+reseecionamiento <- read_sf ("D:\\52556\\Documents\\Secretaria_GralPRI\\reseccionamiento.csv")
+secciones_24 <- st_drop_geometry(secciones_24)
+secciones_24<- secciones_24 %>% select(SECCION,ENTIDAD)
+
+reseecionamiento$SECCION_ORIGEN <- as.numeric(reseecionamiento$SECCION_ORIGEN)
+reseecionamiento$ENTIDAD <- as.numeric(reseecionamiento$ENTIDAD)
+reseecionamiento$SECCION_CREADA <- as.numeric(reseecionamiento$SECCION_CREADA)
+
+# Convertir las columnas de votos a numérico
+Resultados_12$SECCION <- as.numeric(Resultados_12$SECCION)
+Resultados_12$ID_ESTADO <- as.numeric(Resultados_12$ID_ESTADO)
+Resultados_12$PAN <- as.numeric(Resultados_12$PAN)
+Resultados_12$PRI <- as.numeric(Resultados_12$PRI)
+Resultados_12$PRD <- as.numeric(Resultados_12$PRD)
+Resultados_12$PVEM <- as.numeric(Resultados_12$PVEM)
+Resultados_12$PT <- as.numeric(Resultados_12$PT)
+Resultados_12$MC <- as.numeric(Resultados_12$MC)
+Resultados_12$NVA_ALIANZA <- as.numeric(Resultados_12$NVA_ALIANZA)
+
+Resultados_12 <- Resultados_12 %>%
+    rowwise() %>%
+    mutate(Ganador_12 = {
+        votos <- c(PAN = PAN, PRI = PRI, PRD = PRD, PVEM = PVEM, PT = PT, MC = MC, NVA_ALIANZA = NVA_ALIANZA)
+        votos[is.na(votos)] <- 0 # Convertir NA a 0
+        if (all(votos == 0)) {
+            NA_character_ # Retornar NA si todos los votos son 0
+        } else {
+            names(which.max(votos))
+        }
+    })
+
+# Cambiar el nombre de la columna ID_ESTADO por ENTIDAD
+Resultados_12 <- Resultados_12 %>%
+    rename(ENTIDAD = ID_ESTADO)
+
+# Seleccionar solo las columnas ENTIDAD, SECCION y Ganador_12
+Resultados_12 <- Resultados_12 %>%
+    select(ENTIDAD, SECCION, Ganador_12)
+
+
+# Convertir las columnas de votos a numérico
+Resultados_15$SECCION <- as.numeric(Resultados_15$SECCION)
+Resultados_15$ID_ESTADO <- as.numeric(Resultados_15$ID_ESTADO)
+Resultados_15$PAN <- as.numeric(Resultados_15$PAN)
+Resultados_15$PRI <- as.numeric(Resultados_15$PRI)
+Resultados_15$PRD <- as.numeric(Resultados_15$PRD)
+Resultados_15$PVEM <- as.numeric(Resultados_15$PVEM)
+Resultados_15$PT <- as.numeric(Resultados_15$PT)
+Resultados_15$MC <- as.numeric(Resultados_15$MC)
+Resultados_15$NVA_ALIANZA <- as.numeric(Resultados_15$NVA_ALIANZA)
+Resultados_15$MORENA <- as.numeric(Resultados_15$MORENA)
+Resultados_15$PH <- as.numeric(Resultados_15$PH)
+Resultados_15$ES <- as.numeric(Resultados_15$ES)
+
+Resultados_15 <- Resultados_15 %>%
+    rowwise() %>%
+    mutate(Ganador_15 = {
+        votos <- c(PAN = PAN, PRI = PRI, PRD = PRD, PVEM = PVEM, PT = PT, MC = MC, NVA_ALIANZA = NVA_ALIANZA,ES = ES,MORENA = MORENA,PH = PH)
+        votos[is.na(votos)] <- 0 # Convertir NA a 0
+        if (all(votos == 0)) {
+            NA_character_ # Retornar NA si todos los votos son 0
+        } else {
+            names(which.max(votos))
+        }
+    })
+
+# Cambiar el nombre de la columna ID_ESTADO por ENTIDAD
+Resultados_15 <- Resultados_15 %>%
+    rename(ENTIDAD = ID_ESTADO)
+
+# Seleccionar solo las columnas ENTIDAD, SECCION y Ganador_12
+Resultados_15 <- Resultados_15 %>%
+    select(ENTIDAD, SECCION, Ganador_15)
+
+
+# Convertir las columnas de votos a numérico
+Resultados_18$SECCION <- as.numeric(Resultados_18$SECCION)
+Resultados_18$ID_ESTADO <- as.numeric(Resultados_18$ID_ESTADO)
+Resultados_18$PAN <- as.numeric(Resultados_18$PAN)
+Resultados_18$PRI <- as.numeric(Resultados_18$PRI)
+Resultados_18$PRD <- as.numeric(Resultados_18$PRD)
+Resultados_18$PVEM <- as.numeric(Resultados_18$PVEM)
+Resultados_18$PT <- as.numeric(Resultados_18$PT)
+Resultados_18$MC <- as.numeric(Resultados_18$MC)
+Resultados_18$NVA_ALIANZA <- as.numeric(Resultados_18$"NA")
+Resultados_18$MORENA <- as.numeric(Resultados_18$MORENA)
+
+Resultados_18 <- Resultados_18 %>%
+    rowwise() %>%
+    mutate(Ganador_18 = {
+        votos <- c(PAN = PAN, PRI = PRI, PRD = PRD, PVEM = PVEM, PT = PT, MC = MC, NVA_ALIANZA = NVA_ALIANZA,MORENA = MORENA)
+        votos[is.na(votos)] <- 0 # Convertir NA a 0
+        if (all(votos == 0)) {
+            NA_character_ # Retornar NA si todos los votos son 0
+        } else {
+            names(which.max(votos))
+        }
+    })
+
+# Cambiar el nombre de la columna ID_ESTADO por ENTIDAD
+Resultados_18 <- Resultados_18 %>%
+    rename(ENTIDAD = ID_ESTADO)
+
+# Seleccionar solo las columnas ENTIDAD, SECCION y Ganador_12
+Resultados_18 <- Resultados_18 %>%
+    select(ENTIDAD, SECCION, Ganador_18)
+
+
+
+# Convertir las columnas de votos a numérico
+Resultados_21$SECCION <- as.numeric(Resultados_21$SECCION)
+Resultados_21$ID_ESTADO <- as.numeric(Resultados_21$ID_ESTADO)
+Resultados_21$PAN <- as.numeric(Resultados_21$PAN)
+Resultados_21$PRI <- as.numeric(Resultados_21$PRI)
+Resultados_21$PRD <- as.numeric(Resultados_21$PRD)
+Resultados_21$PVEM <- as.numeric(Resultados_21$PVEM)
+Resultados_21$PT <- as.numeric(Resultados_21$PT)
+Resultados_21$MC <- as.numeric(Resultados_21$MC)
+Resultados_21$MORENA <- as.numeric(Resultados_21$MORENA)
+Resultados_21$ES <- as.numeric(Resultados_21$PES)
+Resultados_21$RSP <- as.numeric(Resultados_21$RSP)
+Resultados_21$FXM <- as.numeric(Resultados_21$FXM)
+
+Resultados_21 <- Resultados_21 %>%
+    rowwise() %>%
+    mutate(Ganador_21 = {
+        votos <- c(PAN = PAN, PRI = PRI, PRD = PRD, PVEM = PVEM, PT = PT, MC = MC, RSP = RSP,ES = ES,MORENA = MORENA,FXM = FXM)
+        votos[is.na(votos)] <- 0 # Convertir NA a 0
+        if (all(votos == 0)) {
+            NA_character_ # Retornar NA si todos los votos son 0
+        } else {
+            names(which.max(votos))
+        }
+    })
+
+# Cambiar el nombre de la columna ID_ESTADO por ENTIDAD
+Resultados_21 <- Resultados_21 %>%
+    rename(ENTIDAD = ID_ESTADO)
+
+# Seleccionar solo las columnas ENTIDAD, SECCION y Ganador_12
+Resultados_21 <- Resultados_21 %>%
+    select(ENTIDAD, SECCION, Ganador_21)
+
+#RESECCIONAMIENTO 21
+# Crear nueva columna NUEVA_SECCION
+Resultados_21 <- Resultados_21 %>%
+    left_join(reseecionamiento  , by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD" = "ENTIDAD")) %>%
+    mutate(NUEVA_SECCION = ifelse(!is.na(SECCION_CREADA), SECCION_CREADA, SECCION)) %>%
+    select(-SECCION_CREADA)
+
+Resultados_21<- Resultados_21 %>% select(-SECCION)
+
+Resultados_21 <- Resultados_21 %>%
+    rename(SECCION = NUEVA_SECCION)
+
+# Crear nueva columna NUEVA_SECCION18
+Resultados_18 <- Resultados_18 %>%
+    left_join(reseecionamiento  , by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD" = "ENTIDAD")) %>%
+    mutate(NUEVA_SECCION = ifelse(!is.na(SECCION_CREADA), SECCION_CREADA, SECCION)) %>%
+    select(-SECCION_CREADA)
+
+Resultados_18<- Resultados_18 %>% select(-SECCION)
+
+Resultados_18 <- Resultados_18 %>%
+    rename(SECCION = NUEVA_SECCION)
+
+# Crear nueva columna NUEVA_SECCION18
+Resultados_15 <- Resultados_15 %>%
+    left_join(reseecionamiento  , by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD" = "ENTIDAD")) %>%
+    mutate(NUEVA_SECCION = ifelse(!is.na(SECCION_CREADA), SECCION_CREADA, SECCION)) %>%
+    select(-SECCION_CREADA)
+
+Resultados_15<- Resultados_15 %>% select(-SECCION)
+
+Resultados_15 <- Resultados_15 %>%
+    rename(SECCION = NUEVA_SECCION)
+# Crear nueva columna NUEVA_SECCION18
+Resultados_12 <- Resultados_12 %>%
+    left_join(reseecionamiento  , by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD" = "ENTIDAD")) %>%
+    mutate(NUEVA_SECCION = ifelse(!is.na(SECCION_CREADA), SECCION_CREADA, SECCION)) %>%
+    select(-SECCION_CREADA)
+
+Resultados_12<- Resultados_12 %>% select(-SECCION)
+
+Resultados_12 <- Resultados_12 %>%
+    rename(SECCION = NUEVA_SECCION)
+
+
+# Procesar Resultados_21 para consolidar duplicados
+Resultados_21 <- Resultados_21 %>%
+  group_by(SECCION, ENTIDAD) %>%
+  mutate(frecuencia = n()) %>%
+  arrange(desc(frecuencia), .by_group = TRUE) %>%
+  slice(1) %>% # Tomar el primero de cada grupo, que es el más frecuente o aleatorio en caso de empate
+  ungroup() %>%
+  select(-frecuencia) # Eliminar la columna de frecuencia añadida
+
+Resultados_18 <- Resultados_18 %>%
+  group_by(SECCION, ENTIDAD) %>%
+  mutate(frecuencia = n()) %>%
+  arrange(desc(frecuencia), .by_group = TRUE) %>%
+  slice(1) %>% # Tomar el primero de cada grupo, que es el más frecuente o aleatorio en caso de empate
+  ungroup() %>%
+  select(-frecuencia) # Eliminar la columna de frecuencia añadida
+
+Resultados_15 <- Resultados_15 %>%
+  group_by(SECCION, ENTIDAD) %>%
+  mutate(frecuencia = n()) %>%
+  arrange(desc(frecuencia), .by_group = TRUE) %>%
+  slice(1) %>% # Tomar el primero de cada grupo, que es el más frecuente o aleatorio en caso de empate
+  ungroup() %>%
+  select(-frecuencia) # Eliminar la columna de frecuencia añadida
+
+Resultados_12 <- Resultados_12 %>%
+  group_by(SECCION, ENTIDAD) %>%
+  mutate(frecuencia = n()) %>%
+  arrange(desc(frecuencia), .by_group = TRUE) %>%
+  slice(1) %>% # Tomar el primero de cada grupo, que es el más frecuente o aleatorio en caso de empate
+  ungroup() %>%
+  select(-frecuencia) # Eliminar la columna de frecuencia añadida
+
+secciones_24 <- left_join(secciones_24 , Resultados_21, by = c("SECCION", "ENTIDAD"))
+secciones_24 <- left_join(secciones_24 , Resultados_18, by = c("SECCION", "ENTIDAD"))
+secciones_24 <- left_join(secciones_24 , Resultados_15, by = c("SECCION", "ENTIDAD"))
+secciones_24 <- left_join(secciones_24 , Resultados_12, by = c("SECCION", "ENTIDAD"))
