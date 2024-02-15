@@ -24,6 +24,14 @@ ResultadosDF <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_go
 Lista_Nominal_Selected <- read_sf("D:\\52556\\Documents\\Nassar-oax\\Lista_Nominal_Selected.csv")
 Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
 Secciones_switchers <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\secciones_switcher.csv")
+Colonias_HIDALGO <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
+datamun_Hidalgo <- read_sf("D:\\52556\\Documents\\Data_munHidalg.xlsx")
+
+
+Colonias_HIDALGO <- filter(Colonias_HIDALGO, CVE_ENT == 13)
+Colonias_HIDALGO$CVE_MUN <- as.numeric(Colonias_HIDALGO$CVE_MUN)
+datamun_Hidalgo$Acceso_100 <- as.numeric(datamun_Hidalgo$Acceso_100)
+Colonias_HIDALGO <- left_join(Colonias_HIDALGO, datamun_Hidalgo, by = c("CVE_MUN"))
 
 Secciones_HIDALGO <- filter(sec_mex, ENTIDAD == 13)
 Secciones_HIDALGO <- Secciones_HIDALGO %>%
@@ -78,6 +86,7 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
 Secciones_HIDALGO_DF6 <- filter(Secciones_HIDALGO, DISTRITO == 6)
 Manzanas_HIDALGO_DF6 <- filter(Manzanas_HIDALGO, DISTRITO_F == 6)
 DistritoF_HIDALGO_DF6 <- filter(DistritoF_HIDALGO, DISTRITO == 6)
+Colonias_HIDALGO_DF6 <- filter(Colonias_HIDALGO, DISTRITO == 6)
 
 # Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_HIDALGO_DF6
 Municipios_DF6 <- unique(Secciones_HIDALGO_DF6$MUNICIPIO)
@@ -174,6 +183,7 @@ Manzanas_HIDALGO_DF6 <- st_transform(Manzanas_HIDALGO_DF6, crs = 4326)
 DistritoF_HIDALGO_DF6 <- st_transform(DistritoF_HIDALGO_DF6, crs = 4326)
 Municipios_HIDALGO_DF6 <- st_transform(Municipios_HIDALGO_DF6, crs = 4326)
 DistritoL_HIDALGO_DF6 <- st_transform(DistritoL_HIDALGO_DF6, crs = 4326)
+Colonias_HIDALGO_DF6 <- st_transform(Colonias_HIDALGO_DF6, crs = 4326)
 
 
 # Reordenar los niveles del factor SUGERENCIA en el dataframe mapaHIDALGO_DF6
@@ -249,6 +259,21 @@ mapaHIDALGO_DF6$Gene_prepo <- factor(mapaHIDALGO_DF6$Gene_prepo,
 # Crear un mapa base con el fondo de OpenStreetMap
 mapa <- leaflet() %>%
     addProviderTiles(provider = "OpenStreetMap")
+
+
+
+# Agregar la primera capa de polígonos de las colonias
+mapa <- mapa %>%
+    addPolygons(
+        data = Colonias_HIDALGO_DF6,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~COLONIA,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Colonias"     # Nombre del grupo de la capa
+    )
 
 # Agregar la primera capa de polígonos de manzanas
 mapa <- mapa %>%
@@ -516,7 +541,7 @@ mapa <- mapa %>%
 # Agregar el control de capas al mapa
 mapa <- mapa %>%
     addLayersControl(
-        baseGroups = c("Manzanas", "Secciones", "Municipios","Distrito Local","Distrito Federal" ,"AGEB"),
+        baseGroups = c("Colonias","Manzanas", "Secciones", "Municipios","Distrito Local","Distrito Federal"),
         overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PRI", "Switchers","Participacion", "Lista Nominal", "Generacion","Sugerencia"),
         options = layersControlOptions(collapsed = FALSE)
     )
