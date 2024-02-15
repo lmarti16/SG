@@ -1,5 +1,3 @@
-
-
 # Cargar librerías
 library(sf)
 library(dplyr)
@@ -184,8 +182,7 @@ colores_SUGERENCIA <- colorFactor(
     palette = c("red", "darkblue", "white"), 
     levels = c("Sugerencia prioritaria", "Sugerencia secundaria", "NO"))
 
-
-# Reordenar los niveles del factor GANADOR_21
+# Reordenar los niveles del factor Ganador de la gobernatura 22
 mapaHIDALGO_DF6$GANADOR_21 <- factor(mapaHIDALGO_DF6$GANADORG_C_22,
                                      levels = c("Juntos Hacemos Historia", "Frente Amplio por México", "Movimiento Ciudadano","Empate"))
 # Definir los colores para cada Ganador Coalición
@@ -207,7 +204,7 @@ mapaHIDALGO_DF6$CompetitividadP <- factor(mapaHIDALGO_DF6$CompetitividadP,
                                           levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
 # Definir los colores para cada nivel de competitividadP
 colores_CompetitividadP <- colorFactor(
-    palette = c("#66BD63", "#e5be01", "#006837", "#A50026", "#F46D43"), 
+    palette = c("#9E0142", "#FDAE61", "#E6F598", "#66C2A5", "#3288BD"), 
     domain = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
 
 # Reordenar los niveles del factor switchers
@@ -218,7 +215,6 @@ mapaHIDALGO_DF6$Switchers22 <- factor(mapaHIDALGO_DF6$Switchers22,
 colores_Switcher <- colorFactor(
     palette = c("white", "#4B0082"), 
     levels = c("NO", "SI"))
-
 
 # Reordenar los niveles del factor LN en el dataframe mapaHIDALGO_DF6
 mapaHIDALGO_DF6$Tamaños_lista <- factor(mapaHIDALGO_DF6$Tamaños_lista,
@@ -513,9 +509,8 @@ mapa <- mapa %>%
                        "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
                        "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
                        "Lista Nominal para 2024:", LISTA_NOMINAL),
-    group = "Participación"
+    group = "Participacion"
   )
-
 
 # Agregar capa de polígonos para Lista Nominal
 mapa <- mapa %>%
@@ -557,7 +552,7 @@ mapa <- mapa %>%
 mapa <- mapa %>%
     addLayersControl(
         baseGroups = c("Manzanas", "Secciones", "Municipios","Distrito Local","Distrito Federal" ,"AGEB"),
-        overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PRI", "Switchers","Participación", "Lista Nominal","Sugerencia"),
+        overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PRI", "Switchers","Participacion", "Lista Nominal","Sugerencia"),
         options = layersControlOptions(collapsed = FALSE)
     )
 
@@ -576,7 +571,8 @@ mapa <- mapa %>%
         data = mapaHIDALGO_DF6,
         pal = colores_CompetitividadD, # Establecer los colores de la leyenda usando colores
         values = ~CompetitividadD, # Establecer los valores de la leyenda
-        title = "Competitividad Electoral de Fuerza & Corazón",
+          labels = textoLeyendaD, # Texto de la leyenda preparado que incluye intervalos
+        title = "Competitividad Electoral Comparada",
         position = "bottomleft",
         layerId = "LeyendaCompetitividad",
         group = "Competitividad"  # Grupo de la leyenda
@@ -615,7 +611,7 @@ mapa <- mapa %>%
         title = "Intervalos de Participación",
         position = "bottomleft",
         layerId = "Leyendaparticipa",
-        group = "participacion"  # Grupo de la leyenda
+        group = "Participacion"  # Grupo de la leyenda
     )  %>%
    addLegend(
         data = mapaHIDALGO_DF6,
@@ -636,6 +632,7 @@ mapa <- mapa %>%
             </div>",
         position = "bottomright"
     )
+
 
 # Mostrar el mapa
 mapa
