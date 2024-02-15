@@ -222,11 +222,11 @@ colores_Switcher <- colorFactor(
 
 # Reordenar los niveles del factor LN en el dataframe mapaHIDALGO_DF6
 mapaHIDALGO_DF6$Tamaños_lista <- factor(mapaHIDALGO_DF6$Tamaños_lista,
-                                     levels = c("La más baja", "Baja", "Media","Alta ","La más alta"))
+                                     levels = c("La más baja", "Baja", "Media","Alta","La más alta"))
 # Definir los colores para cada nivel de Lista Nominal
 colores_LN <- colorFactor(
     palette = c("#ffffd4", "#fec44f", "#fe9929", "#d95f0e", "#993404"), 
-    domain = c("La más baja", "Baja", "Media","Alta ","La más alta"))
+    domain = c("La más baja", "Baja", "Media","Alta","La más alta"))
 
 # Definir los colores para cada nivel de Participacion
 colores_participacion <- colorFactor(
@@ -235,7 +235,7 @@ colores_participacion <- colorFactor(
 
 # Reordenar los niveles del factor Participacion en el dataframe LN
 mapaHIDALGO_DF6$Porcen_parti <- factor(mapaHIDALGO_DF6$Porcen_parti,
-                                     levels = c("Muy poca participación", "Poca participación", "Participación media,"Alta participación","Muy alta participación"))
+                                     levels = c("Muy poca participación", "Poca participación", "Participación media","Alta participación","Muy alta participación"))
 
 # Crear un mapa base con el fondo de OpenStreetMap
 mapa <- leaflet() %>%
@@ -626,11 +626,6 @@ mapa <- mapa %>%
         layerId = "Leyendalista",
         group = "Lista Nominal"  # Grupo de la leyenda
     ) 
-
-
-
-
-
 # Agregar el control de HTML al mapa
 mapa <- mapa %>%
     addControl(
