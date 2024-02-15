@@ -15,7 +15,6 @@ library(leaflet)
 library(rio)
 library(stringr)
 
-
 # Leer archivo SHP usando read_sf()
 Manzanas_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MANZANA.shp")
 sec_mex <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
@@ -111,7 +110,6 @@ mapaHIDALGO_DF6$quintilM <- cut(mapaHIDALGO_DF6$porcentaje_SHH_22, breaks = quin
 mapaHIDALGO_DF6$quintilD <- cut(mapaHIDALGO_DF6$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
 mapaHIDALGO_DF6$quintilparti <- cut(mapaHIDALGO_DF6$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
 mapaHIDALGO_DF6$quintilLN <- cut(mapaHIDALGO_DF6$LISTA_NOMINAL, breaks = quintilesLN, include.lowest = TRUE, labels = labels_custom(quintilesLN))
-
 
 # Corrección en la definición de rangosQuintiles para mantener la consistencia
 rangosQuintiles <- list(
@@ -209,7 +207,6 @@ colores_CompetitividadP <- colorFactor(
 # Reordenar los niveles del factor switchers
 mapaHIDALGO_DF6$Switchers22 <- factor(mapaHIDALGO_DF6$Switchers22,
                                       levels = c("NO", "SI"))
-
 # Definir los colores para switchers
 colores_Switcher <- colorFactor(
     palette = c("white", "#4B0082"), 
@@ -596,7 +593,6 @@ mapa <- mapa %>%
             </div>",
         position = "bottomright"
     )
-
 
 # Mostrar el mapa
 mapa
