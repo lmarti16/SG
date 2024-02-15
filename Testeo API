@@ -23,7 +23,7 @@ DistritoL_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\DISTRIT
 ResultadosDF <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_gober(resec).csv")
 Lista_Nominal_Selected <- read_sf("D:\\52556\\Documents\\Nassar-oax\\Lista_Nominal_Selected.csv")
 Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICIPIO.shp")
-Secciones_switchers <- read_sf("D:\\52556\\Documents\\Sonora_Isaac\\Secciones_switchers.csv")
+Secciones_switchers <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\secciones_switcher.csv")
 
 Secciones_HIDALGO <- filter(sec_mex, ENTIDAD == 13)
 Secciones_HIDALGO <- Secciones_HIDALGO %>%
@@ -67,6 +67,9 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
 
 Resultados_HIDALGO <- Resultados_HIDALGO %>% 
     mutate(porcentajePRI = (PRI_22 / TOTAL_VOTOS_22) * 100)
+
+Resultados_HIDALGO <- Resultados_HIDALGO %>% 
+    mutate(porcentajeMORENA = (MORENA_22 / TOTAL_VOTOS_22) * 100)
 
 #armar el Distrito Federal
 Secciones_HIDALGO_DF6 <- filter(Secciones_HIDALGO, DISTRITO == 6)
@@ -321,6 +324,7 @@ mapa <- mapa %>%
                        "Partido preponderante en 2022:", GANADO_G_22, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
                        "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Partido preponderante en 2012:", Ganador_18, "<br>",
                        "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
                        "Competitividad de la Sección PRI:", CompetitividadP, "<br>",
                        "Votos por el FAM en la última eleccción:", FAM_G_22, "<br>",
@@ -426,7 +430,15 @@ mapa <- mapa %>%
         weight = 1,
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
                        "En la sección, para el PRI hay:", CompetitividadP, "<br>",
-                      "Intervalo de competividad para el PRI:", quintilD, "<br>",
+                      "Intervalo de competividad para el PRI:", quintilF, "<br>",
+                       "Votos por el FAM:", FAM_G_22, "<br>",
+                       "Porcentaje de votos por el FAM:", paste(round(porcentaje_FAM_22, 2), "%"), "<br>",
+                       "Votos por el PRI:", PRI_22, "<br>",
+                       "Porcentaje de votos por el PRI:", paste(round(porcentajePRI, 2), "%"), "<br>",
+                       "Votos por el PRI:", MORENA_22, "<br>",
+                       "Porcentaje de votos por Morena:", paste(round(porcentajeMORENA, 2), "%"), "<br>",
+                       "Votos por JHH:", SHH_G_22, "<br>",
+                       "Porcentaje de votos por JHH:", paste(round(porcentaje_SHH_22, 2), "%"), "<br>",
                        "Coalición Ganadora actual:", GANADORG_C_22, "<br>",
                        "Partido preponderante en 2022:", GANADO_G_22, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
