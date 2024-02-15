@@ -541,7 +541,7 @@ mapa <- mapa %>%
 # Agregar el control de capas al mapa
 mapa <- mapa %>%
     addLayersControl(
-        baseGroups = c("Colonias","Manzanas", "Secciones", "Municipios","Distrito Local","Distrito Federal"),
+        baseGroups = c("Manzanas","Colonias", "Secciones", "Municipios","Distrito Local","Distrito Federal"),
         overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PRI", "Switchers","Participacion", "Lista Nominal", "Generacion","Sugerencia"),
         options = layersControlOptions(collapsed = FALSE)
     )
