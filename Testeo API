@@ -43,8 +43,8 @@ Secciones_switchers$ENTIDAD <- as.numeric(Secciones_switchers$ENTIDAD)
 # Renombrar los resultados 
 ResultadosDF$GANADORG_C_22 <- recode(ResultadosDF$GANADORG_C_22,
                                      "EMPATE" = "Empate",
-                                     "FAM_G" = "Frente Amplio por México",
-                                     "SHH_G" = "Juntos Hacemos Historia",
+                                     "FAM_G" = "Fuerza & Corazón por México",
+                                     "SHH_G" = "Sigamos Hacemos Historia",
                                      "MC" = "Movimiento Ciudadano")
 
 # Filtrar el dataframe Resultados por la columna ENTIDAD igual a 9
@@ -184,11 +184,11 @@ colores_SUGERENCIA <- colorFactor(
 
 # Reordenar los niveles del factor Ganador de la gobernatura 22
 mapaHIDALGO_DF6$GANADOR_21 <- factor(mapaHIDALGO_DF6$GANADORG_C_22,
-                                     levels = c("Juntos Hacemos Historia", "Frente Amplio por México", "Movimiento Ciudadano","Empate"))
+                                     levels = c("Sigamos Hacemos Historia", "Fuerza & Corazón por México", "Movimiento Ciudadano","Empate"))
 # Definir los colores para cada Ganador Coalición
 colores_GANADOR_21 <- colorFactor(
     palette = c("purple", "brown", "darkblue"), 
-    levels = c("Empate", "Juntos Hacemos Historia", "Frente Amplio por México"))
+    levels = c("Empate", "Sigamos Hacemos Historia", "Fuerza & Corazón por México"))
 
 # Reordenar los niveles del factor CompetitividadD
 mapaHIDALGO_DF6$CompetitividadD <- factor(mapaHIDALGO_DF6$CompetitividadD,
