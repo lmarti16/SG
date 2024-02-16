@@ -15,14 +15,15 @@ library(stringr)
 library(rio)
 
 secciones_24 <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
-Resultados_21 <- read_sf("D:\\Descargas\\DIPUTACIONES_FED_MR_2021\\DIPUTACIONES_FED_MR_2021\\2021_SEE_DIP_FED_MR_NAL_SEC.csv")
 Resultados_18 <- read_sf("D:\\Descargas\\DIPUTACIONES_FED_MR_2018\\DIPUTACIONES_FED_MR_2018\\2018_SEE_DIP_FED_MR_NAL_SEC.csv")
 Resultados_15 <- read_sf("D:\\Descargas\\Descargas\\DIPUTACIONES_FED_MR_2015\\DIPUTACIONES_FED_MR_2015\\2015_SEE_DIP_FED_MR_NAL_SEC.csv")
 Resultados_12 <- read_sf("D:\\Descargas\\DIPUTACIONES_FED_MR_2012\\DIPUTACIONES_FED_MR_2012\\2012_SEE_DIP_FED_MR_NAL_SEC.csv")
-reseecionamiento <- read_sf ("D:\\52556\\Documents\\Secretaria_GralPRI\\reseccionamiento.csv")
 secciones_24 <- st_drop_geometry(secciones_24)
 secciones_24<- secciones_24 %>% select(SECCION,ENTIDAD)
 
+
+Resultados_21 <- read_sf("D:\\Descargas\\DIPUTACIONES_FED_MR_2021\\DIPUTACIONES_FED_MR_2021\\2021_SEE_DIP_FED_MR_NAL_SEC.csv")
+reseecionamiento <- read_sf ("D:\\52556\\Documents\\Secretaria_GralPRI\\reseccionamiento.csv")
 reseecionamiento$SECCION_CREADA <- as.numeric(reseecionamiento$SECCION_CREADA)
 reseecionamiento$SECCION_ORIGEN <- as.numeric(reseecionamiento$SECCION_ORIGEN)
 reseecionamiento$ENTIDAD <- as.numeric(reseecionamiento$ENTIDAD)
@@ -31,79 +32,57 @@ Resultados_21[, -c(3,5,7)] <- lapply(Resultados_21[, -c(3,5,7)], as.numeric)
 Resultados_21 <- Resultados_21 %>%
     rename(ENTIDAD = ID_ESTADO)
 
-# Filtrar las filas de Resultados_gober donde SECCION está en SECCION_ORIGEN
-nuevos_datos <- Resultados_21 %>%
-    filter(!SECCION %in% reseecionamiento$SECCION_ORIGEN)
+reseecionamiento <- reseecionamiento %>%
+    rename(SECCION = SECCION_ORIGEN)
 
-# Crear un nuevo dataframe con las filas eliminadas
-datos_eliminados <- Resultados_21 %>%
-    filter(SECCION %in% reseecionamiento$SECCION_ORIGEN)
+Resultados_21E <- inner_join(Resultados_21, reseecionamiento, by = c("ENTIDAD", "SECCION"))
+Resultados_21L <- anti_join(Resultados_21, reseecionamiento, by = c("ENTIDAD", "SECCION"))
 
-# Realizar un left join para asignar SECCION_CREADA a cada valor de SECCION
-datos_eliminados_con_creada <- datos_eliminados %>%
-    left_join(reseecionamiento, by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD"))
+# Contar la frecuencia de cada combinación de ENTIDAD y SECCION
+frecuencia_combinaciones <- Resultados_21E %>%
+    group_by(ENTIDAD, SECCION) %>%
+    summarise(frecuencia = n())
 
-# Obtener el número de repeticiones de cada SECCION
-repeticiones_seccion <- table(reseecionamiento$SECCION_ORIGEN)
+# Unir los datos originales con la frecuencia de las combinaciones
+Resultados_21E <- left_join(Resultados_21E , frecuencia_combinaciones, by = c("ENTIDAD", "SECCION"))
 
-# Dividir los valores por el número de repeticiones (excluyendo las columnas mencionadas)
-datos_eliminados_divididos <- datos_eliminados_con_creada %>%
-    mutate(across(!c( CIRCUNSCRIPCION,ENTIDAD,NOMBRE_ESTADO,ID_DISTRITO_FEDERAL,CABECERA_DISTRITAL_FEDERAL,ID_MUNICIPIO,MUNICIPIO,SECCION,CASILLAS, SECCION_CREADA), 
-                  ~ . / repeticiones_seccion[match(SECCION, names(repeticiones_seccion))]))
+# Dividir los valores de todas las columnas menos los deseados por la frecuencia
+columnas_a_dividir <- setdiff(names(Resultados_21E), c("CIRCUNSCRIPCION", "ENTIDAD", "NOMBRE_ESTADO", "ID_DISTRITO_FEDERAL", "CABECERA_DISTRITAL_FEDERAL", "ID_MUNICIPIO", "MUNICIPIO", "SECCION", "SECCION_CREADA", "frecuencia"))
+
+Resultados_21E <- Resultados_21E %>%
+    mutate(across(all_of(columnas_a_dividir), ~./frecuencia))
 
 # Eliminar los decimales de todo el dataframe
-datos_eliminados_divididos <- datos_eliminados_divididos %>%
-    mutate(across(!c(CIRCUNSCRIPCION,ENTIDAD,NOMBRE_ESTADO,ID_DISTRITO_FEDERAL,CABECERA_DISTRITAL_FEDERAL,ID_MUNICIPIO,MUNICIPIO,SECCION,CASILLAS,SECCION_CREADA), floor))
+Resultados_21E <- Resultados_21E %>%
+    mutate(across(!c("CIRCUNSCRIPCION", "ENTIDAD", "NOMBRE_ESTADO", "ID_DISTRITO_FEDERAL", "CABECERA_DISTRITAL_FEDERAL", "ID_MUNICIPIO", "MUNICIPIO", "SECCION", "SECCION_CREADA", "frecuencia"), floor))
 
 # Cambiar el lugar de SECCION y SECCION_CREADA en datos_eliminados_divididos
-datos_eliminados_divididos <- datos_eliminados_divididos %>%
-    select(CIRCUNSCRIPCION:SECCION_CREADA, SECCION, everything())
+Resultados_21E <- Resultados_21E %>%
+    select(CIRCUNSCRIPCION:SECCION, SECCION_CREADA, everything())
 
 # Eliminar las columnas SECCION y MUNICIPIO
-datos_eliminados_divididos <- datos_eliminados_divididos %>%
-    select(-SECCION, )
+Resultados_21E <- Resultados_21E %>%
+    select(-SECCION, -frecuencia)
 
 # Cambiar el nombre de SECCION_CREADA a SECCION
-datos_eliminados_divididos <- datos_eliminados_divididos %>%
+Resultados_21E <- Resultados_21E %>%
     rename(SECCION = SECCION_CREADA)
 
 # Unir estos datos al dataframe de nuevos_datos utilizando rbind
-ResultadosT <- rbind(nuevos_datos, datos_eliminados_divididos)
+Resultados_21 <- rbind(Resultados_21L, Resultados_21E)
+
+Resultados_21 <- Resultados_21 %>%
+  group_by(CIRCUNSCRIPCION, ENTIDAD, NOMBRE_ESTADO, ID_DISTRITO_FEDERAL, CABECERA_DISTRITAL_FEDERAL, ID_MUNICIPIO, MUNICIPIO, SECCION) %>%
+  summarise(across(everything(), sum, na.rm = TRUE))
 
 # Procesar Resultados_21 para consolidar duplicados
-ResultadosT <- ResultadosT %>%
+Resultados_21 <- Resultados_21 %>%
     group_by(SECCION, ENTIDAD) %>%
     mutate(frecuencia = n()) %>%
     arrange(desc(frecuencia), .by_group = TRUE) %>%
     slice(1) %>% # Tomar el primero de cada grupo, que es el más frecuente o aleatorio en caso de empate
     ungroup() %>%
     select(-frecuencia) # Eliminar la columna de frecuencia añadida
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#Convertir a numero
-Resultados_21[, -c(3,5,7)] <- lapply(Resultados_21[, -c(3,5,7)], as.numeric)
 
 Resultados_21 <- Resultados_21 %>% 
     mutate( FAM_21 = (PAN + PRI + PRD + PAN_PRI_PRD +PAN_PRI+PAN_PRD+PRI_PRD))
