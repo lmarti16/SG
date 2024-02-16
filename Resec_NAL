@@ -71,10 +71,6 @@ Resultados_21E <- Resultados_21E %>%
 # Unir estos datos al dataframe de nuevos_datos utilizando rbind
 Resultados_21 <- rbind(Resultados_21L, Resultados_21E)
 
-Resultados_21 <- Resultados_21 %>%
-  group_by(CIRCUNSCRIPCION, ENTIDAD, NOMBRE_ESTADO, ID_DISTRITO_FEDERAL, CABECERA_DISTRITAL_FEDERAL, ID_MUNICIPIO, MUNICIPIO, SECCION) %>%
-  summarise(across(everything(), sum, na.rm = TRUE))
-
 # Procesar Resultados_21 para consolidar duplicados
 Resultados_21 <- Resultados_21 %>%
     group_by(SECCION, ENTIDAD) %>%
