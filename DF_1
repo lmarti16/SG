@@ -92,9 +92,9 @@ Lista_Nominal_Selected$ENTIDAD <- as.numeric(Lista_Nominal_Selected$ENTIDAD)
 
 Resultados_HIDALGO <- filter(Resultados, ENTIDAD == 13)
 
+Resultados_HIDALGO <- left_join(Resultados_gober, Resultados_HIDALGO, by = c("SECCION","ENTIDAD"))
 Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Secciones_switchers, by = c("SECCION","ENTIDAD"))
 Resultados_HIDALGO <- left_join(Resultados_HIDALGO, Lista_Nominal_Selected, by = c("SECCION","ENTIDAD"))
-Resultados_HIDALGO <- left_join(Resultados_gober, Resultados_HIDALGO, by = c("SECCION","ENTIDAD"))
 
 # Crear la columna "Traidores"
 Resultados_HIDALGO$Traidores <- ifelse(
