@@ -1155,7 +1155,7 @@ width = 8.5, height = 11, units = "in", device = "pdf")
 
 #Mapa de sugerencia
 Mapa_Sugerencia <- ggplot() +
-    annotation_map_tile(type = "osm", zoom = 10) +
+    annotation_map_tile(type = "osm", zoom = 12) +
     geom_sf(data = mapaHIDALGO_DF1, aes(fill = ifelse(is.na(Sugerencia), "NO", Sugerencia)), alpha = .7, color = NA) +
     geom_sf(data = Secciones_HIDALGO_DF1, aes(fill = NULL), color = "grey", size = 0.1, alpha = 0) +
     geom_sf(data = Municipios_HIDALGO_DF1, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
