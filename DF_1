@@ -177,7 +177,7 @@ DISTRITOF_HIDALGO_DF1 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 1)
 Colonias_HIDALGO_DF1 <- filter(Colonias_HIDALGO, DISTRITO == 1)
 data_HIDALGO_DF1 <- st_drop_geometry(Secciones_HIDALGO_DF1)
 Resultados_HIDALGO_DF1 <- left_join(data_HIDALGO_DF1, Resultados_HIDALGO, by = c("ENTIDAD", "SECCION"))
-
+Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"TIPO",-"CONTROL",-"GEOMETRY1_", - "ID")
 
 Municipios_HIDALGO_DF1 <- left_join(Municipios_HIDALGO, datamun_Hidalgo, by = c("MUNICIPIO"))
 Municipios_HIDALGO_DF1 <- filter(Municipios_HIDALGO_DF1, DISTRITO == 1)
