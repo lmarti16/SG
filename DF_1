@@ -147,7 +147,6 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
     mutate(across(-c(NO_Mun,
                      CIRCUNSCRIPCION,
                      NOMBRE_ESTADO,
-                     NOMBRE_ENTIDAD,
                      Cambio_elector,
                      Gene_prepo,
                      GANADO_G_22,
@@ -169,12 +168,16 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
                      lealtad18,
                      CABECERA_DISTRITAL_LOCAL), as.numeric, errors = "coerce"))
 
+Resultados_HIDALGO <- Resultados_HIDALGO %>%
+    select(-DISTRITO, -DISTRITO_L, -MUNICIPIO)
 
-Resultados_HIDALGO_DF1 <- filter(Resultados_HIDALGO, DISTRITO == 1)
 Secciones_HIDALGO_DF1 <- filter(Secciones_HIDALGO,  DISTRITO == 1)
 Manzanas_HIDALGO_DF1 <- filter(Manzanas_HIDALGO,  DISTRITO_F == 1)
 DISTRITOF_HIDALGO_DF1 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 1)
 Colonias_HIDALGO_DF1 <- filter(Colonias_HIDALGO, DISTRITO == 1)
+data_HIDALGO_DF1 <- st_drop_geometry(Secciones_HIDALGO_DF1)
+Resultados_HIDALGO_DF1 <- left_join(data_HIDALGO_DF1, Resultados_HIDALGO, by = c("ENTIDAD", "SECCION"))
+
 
 Municipios_HIDALGO_DF1 <- left_join(Municipios_HIDALGO, datamun_Hidalgo, by = c("MUNICIPIO"))
 Municipios_HIDALGO_DF1 <- filter(Municipios_HIDALGO_DF1, DISTRITO == 1)
@@ -233,9 +236,6 @@ Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>%
         TRUE ~ "NO"  # Asigna "NO" si ninguna de las condiciones se cumple
     ))
 
-
-# Guarda el dataframe como un archivo CSV
-export(Resultados_HIDALGO_DF1, "Resultados_HIDALGO_DF1.csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise = FALSE)
 
 Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
 
