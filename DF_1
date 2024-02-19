@@ -247,6 +247,12 @@ mapaHIDALGO_DF1Man <- left_join(Manzanas_HIDALGO_DF1, Resultados_HIDALGO_DF1, by
 #Crea el mapa del distrito
 HIDALGODF <- mapa300_24[mapa300_24$ENTIDAD == "13", ]
 
+Colonias_HIDALGO <- st_transform(Colonias_HIDALGO, st_crs(mapaHIDALGO_DF1))
+Colonias_prio_DF1 <- st_intersection(mapaHIDALGO_DF1 , Colonias_HIDALGO)
+Colonias_prio_DF1 <- st_drop_geometry(Colonias_prio_DF1)
+Colonias_prio_DF1 <- Colonias_prio_DF1[, c("Sugerencia","SECCION", "COLONIA", "LISTA_NOMINAL", "GANADORG_C_22","NOM_MUN","POBTOT","GM_2020")]# Guardar el DataFrame como archivo CSV en UTF-8
+write.csv(Colonias_prio_DF1, file = "Colonias_prio_DF1.csv", row.names = FALSE, fileEncoding = "UTF-8")
+
 #Mapa Resultados
 Mapa_Resultados <- ggplot() +
     annotation_map_tile(type = "osm", zoom = 10) +
