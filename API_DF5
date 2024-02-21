@@ -68,11 +68,17 @@ Resultados <- Resultados %>%
 
 Resultados_CDMX <- filter(Resultados, ENTIDAD == 9)
 Secciones_CDMX <- filter(sec_mex, ENTIDAD == 9)
-Secciones_DF5 <- filter(Secciones_CDMX, DISTRITO_FEDERAL== 5)
+Secciones_CDMX_DF5 <- filter(Secciones_CDMX, DISTRITO_FEDERAL== 5)
 Manzanas_CDMX_DF5 <- filter(Manzanas_CDMX, DISTRITO_F == 5)
 # Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_CDMX_DF5
 Municipios_DF5 <- unique(Secciones_DF5$MUNICIPIO)
 Valores_DL_DF5 <- unique(Secciones_DF5$DISTRITO_L)
+DistritoF_CDMX_DF5 <- filter(DistritoF_CDMX, DISTRITO == 5)
+ESEM_CDMX_DF5- st_intersection(ESEM_CDMX, Secciones_CDMX_DF5)
+Colonias_CDMX <- filter(Colonias_CDMX, CVE_ENT == 09)
+Colonias_CDMX <- st_transform(Colonias_CDMX, st_crs(Secciones_CDMX_DF5))
+Colonias_CDMX_DF5 <- st_intersection(Colonias_CDMX, Secciones_CDMX_DF5)
+
 
 # Filtrar Municipios_CDMX
 Municipios_CDMX_DF5 <- Municipios_CDMX[Municipios_CDMX$MUNICIPIO %in% Municipios_DF5, ]
@@ -206,7 +212,6 @@ mapa_DF5 <- mapa_DF5 %>%
   ))
 
 
-
 # Transformar sistema de coordenadas
 mapa_DF5 <- st_transform(mapa_DF5, crs = 4326)
 Secciones_CDMX_DF5 <- st_transform(Secciones_CDMX_DF5, crs = 4326)
@@ -223,7 +228,7 @@ mapa_DF5$SUGERENCIA <- factor(mapa_DF5$SUGERENCIA,
 
 # Definir los colores para cada nivel de sugerencia
 colores_SUGERENCIA <- colorFactor(
-    palette = c("red", "darkblue", "white"), 
+    palette = c("red", "darkblue","yellow", "white"), 
                                      levels = c("Sugerencia prioritaria", "Sugerencia secundaria", "Sugerencia terciaria","Sección no sugerida"))
 
 # Reordenar los niveles del factor Ganador de la gobernatura 22
