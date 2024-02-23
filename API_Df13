@@ -32,7 +32,7 @@ Circunscripcion <- read_sf("D:\\Descargas\\poligonos_cdmx\\circunscripcionesDT\\
 
 Circunscripcion <- Circunscripcion  %>%
     filter(grepl("C-", Name))
-
+Circunscripcion <- st_zm(Circunscripcion)
 
 Secciones_Switcher$SECCION <- as.numeric(Secciones_Switcher$SECCION)
 Secciones_Switcher$ENTIDAD <- as.numeric(Secciones_Switcher$ENTIDAD)
@@ -653,7 +653,7 @@ mapa <- mapa %>%
 mapa <- mapa %>%
     addLayersControl(
         baseGroups = c("Manzanas","Colonias", "Secciones","AGEB","Circunscripciones", "Municipios","Distrito Local","Distrito Federal"),
-        overlayGroups = c("Coalición Ganadora","ESEM", "Competitividad","Competitividad PRI", "Switcher","Participacion", "Lista Nominal", "Generacion","Sugerencia"),
+        overlayGroups = c("Coalición Ganadora","ESEM", "Competitividad","Competitividad PRD", "Switcher","Participacion", "Lista Nominal", "Generacion","Sugerencia"),
         options = layersControlOptions(collapsed = FALSE)
     )
 
