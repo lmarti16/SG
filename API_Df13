@@ -28,6 +28,10 @@ Colonias_MX <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
 ESEM_ValleMX <- read_sf("D:\\Descargas\\Socio-economica Edomex-cdmx\\VALLE_DE_MEXICO.shp")
 ESEM_CDMX <- filter(ESEM_ValleMX, CVE_ENT == "09")
 ESEM_CDMX <- st_transform(ESEM_CDMX, st_crs(sec_mex))
+Circunscripcion <- read_sf("D:\\Descargas\\poligonos_cdmx\\circunscripcionesDT\\06.kml") #Usa el No. de la alcaldía
+
+Circunscripcion <- Circunscripcion  %>%
+    filter(grepl("C-", Name))
 
 
 Secciones_Switcher$SECCION <- as.numeric(Secciones_Switcher$SECCION)
@@ -110,14 +114,15 @@ Resultados_DF13 <- left_join(Resultados_DF13, Lista_Nominal_Selected, by = c("SE
 Resultados_DF13 <- Resultados_DF13 %>% 
     mutate( porFAM_21 = (FAM_21 /TOTAL_VOTOS_21)*100) %>% 
     mutate( porPRI_21 = (PRI_21 /TOTAL_VOTOS_21)*100) %>% 
+    mutate( porPRD_21 = (PRD_21 /TOTAL_VOTOS_21)*100) %>% 
     mutate( porMORENA_21 = (MORENA_21 /TOTAL_VOTOS_21)*100) %>% 
     mutate( porSHH_21 = (SHH_21 /TOTAL_VOTOS_21)*100) %>% 
     mutate( participacion = (TOTAL_VOTOS_21 /LISTA_NOMINAL_21)*100) %>% 
     mutate( diferencia = porFAM_21 - porSHH_21) %>%
-    mutate( diferenciapri = FAM_21 - PRI_21) 
+    mutate( diferenciaPRD = FAM_21 - PRD_21) 
 
 # Crear quintiles
-quintilesF <- quantile(Resultados_DF13$diferenciapri, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesF <- quantile(Resultados_DF13$diferenciaPRD, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
 quintilesM <- quantile(Resultados_DF13$porSHH_21, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
 quintilesD <- quantile(Resultados_DF13$diferencia, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
 quintilesparti <- quantile(Resultados_DF13$participacion, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
@@ -134,7 +139,7 @@ labels_custom <- function(breaks) {
 }
 
 # Agrega columna con quintiles y etiquetas personalizadas
-Resultados_DF13$quintilF <- cut(Resultados_DF13$diferenciapri, breaks = quintilesF, include.lowest = TRUE, labels = labels_custom(quintilesF))
+Resultados_DF13$quintilF <- cut(Resultados_DF13$diferenciaPRD, breaks = quintilesF, include.lowest = TRUE, labels = labels_custom(quintilesF))
 Resultados_DF13$quintilM <- cut(Resultados_DF13$porSHH_21, breaks = quintilesM, include.lowest = TRUE, labels = labels_custom(quintilesM))
 Resultados_DF13$quintilD <- cut(Resultados_DF13$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
 Resultados_DF13$quintilparti <- cut(Resultados_DF13$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
@@ -238,6 +243,7 @@ DistritoF_CDMX_DF13 <- st_transform(DistritoF_CDMX_DF13, crs = 4326)
 Municipios_CDMX_DF13 <- st_transform(Municipios_CDMX_DF13, crs = 4326)
 DistritoL_CDMX_DF13 <- st_transform(DistritoL_CDMX_DF13, crs = 4326)
 Colonias_CDMX_DF13 <- st_transform(Colonias_CDMX_DF13, crs = 4326)
+Circunscripcion<- st_transform(Circunscripcion, crs = 4326)
 
 # Renombrar los resultados 
 mapa_DF13$GanadorC_21 <- recode(mapa_DF13$GanadorC_21,
@@ -381,7 +387,17 @@ mapa <- mapa %>%
         opacity = 0.8,          # Opacidad de los bordes
         group = "AGEB"     # Nombre del grupo de la capa
     )
-
+mapa <- mapa %>%
+    addPolygons(
+        data = Circunscripcion,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~Name,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Circunscripciones"     # Nombre del grupo de la capa
+    )
 # Agregar la  capa de polígonos a nivel municipios
 mapa <- mapa %>%
     addPolygons(
@@ -485,7 +501,7 @@ mapa <- mapa %>%
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
                        "Partido preponderante en 2018:", Ganador_18, "<br>",
                        "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
-                       "Competitividad de la Sección PRI:", CompetitividadP, "<br>",
+                       "Competitividad de la Sección PRD:", CompetitividadP, "<br>",
                        "Votos por el FAM en la última eleccción:", FAM_21, "<br>",
                        "Porcentaje de votos por el FAM en la última eleccción:", paste(round(porFAM_21, 2), "%"), "<br>",
                        "Votos por JHH en la última eleccción:", SHH_21, "<br>",
@@ -538,13 +554,13 @@ mapa <- mapa %>%
         color = "white",
         weight = 1,
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
-                       "En la sección, para el Frente sin el PRI hay:", CompetitividadP, "<br>",
-                      "Voto de la coalición sin el PRI:", diferenciapri, "<br>",
-                      "Intervalo de votos sin el PRI:", quintilF, "<br>",
+                       "En la sección, para el Frente sin el PRD hay:", CompetitividadP, "<br>",
+                      "Voto de la coalición sin el PRD:", diferenciaPRD, "<br>",
+                      "Intervalo de votos sin el PRD:", quintilF, "<br>",
                        "Votos por el FAM:", FAM_21, "<br>",
                        "Porcentaje de votos por el FAM:", paste(round(porFAM_21, 2), "%"), "<br>",
-                       "Votos por el PRI:", PRI_21, "<br>",
-                       "Porcentaje de votos por el PRI:", paste(round(porPRI_21, 2), "%"), "<br>",
+                       "Votos por el PRD:", PRD_21, "<br>",
+                       "Porcentaje de votos por el PRD:", paste(round(porPRD_21, 2), "%"), "<br>",
                        "Votos por MORENA:", MORENA_21, "<br>",
                        "Porcentaje de votos por Morena:", paste(round(porMORENA_21, 2), "%"), "<br>",
                        "Votos por JHH:", SHH_21, "<br>",
@@ -555,7 +571,7 @@ mapa <- mapa %>%
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_LOCAL, "<br>",
                        "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
-        group = "Competitividad PRI"       # Nombre del grupo de la capa
+        group = "Competitividad PRD"       # Nombre del grupo de la capa
     )
 
 # Agregar capa de polígonos para Participación
@@ -636,7 +652,7 @@ mapa <- mapa %>%
 # Agregar el control de capas al mapa
 mapa <- mapa %>%
     addLayersControl(
-        baseGroups = c("Manzanas","Colonias","AGEB", "Secciones", "Municipios","Distrito Local","Distrito Federal"),
+        baseGroups = c("Manzanas","Colonias", "Secciones","AGEB","Circunscripciones", "Municipios","Distrito Local","Distrito Federal"),
         overlayGroups = c("Coalición Ganadora","ESEM", "Competitividad","Competitividad PRI", "Switcher","Participacion", "Lista Nominal", "Generacion","Sugerencia"),
         options = layersControlOptions(collapsed = FALSE)
     )
@@ -666,10 +682,10 @@ mapa <- mapa %>%
         data = mapa_DF13,
         pal = colores_CompetitividadP, # Establecer los colores de la leyenda usando colores
         values = ~CompetitividadP, # Establecer los valores de la leyenda
-        title = "Competitividad Electoral del Frente sin el PRI",
+        title = "Competitividad Electoral del Frente sin el PRD",
         position = "bottomleft",
-        layerId = "LeyendaPRI",
-        group = "Competitividad PRI"  # Grupo de la leyenda
+        layerId = "LeyendaPRD",
+        group = "Competitividad PRD"  # Grupo de la leyenda
     ) %>%
     addLegend(
         data = mapa_DF13,
@@ -722,7 +738,7 @@ mapa <- mapa %>%
 mapa <- mapa %>%
     addControl(
         html = "<div style='margin-bottom: 10px; text-align: center;'>
-                Distrito Federal 5 de la CDMX<br>
+                Distrito Federal 13 de la CDMX<br>
                 Elaborado por Qualia: Asesoria Especializada<br>
                  Todos los Derechos Reservados<br>
                 NOTA:El uso y distribución de la API es responsabilidad del cliente<br>
