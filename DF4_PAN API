@@ -570,7 +570,7 @@ mapa <- mapa %>%
         data = mapaHIDALGO_DF4,
         pal = colores_CompetitividadP, # Establecer los colores de la leyenda usando colores
         values = ~CompetitividadP, # Establecer los valores de la leyenda
-        title = "Competitividad Electoral del Frente sin el PRD",
+        title = "Competitividad Electoral del Frente sin el PAN",
         position = "bottomleft",
         layerId = "LeyendaPAN",
         group = "Competitividad PAN"  # Grupo de la leyenda
