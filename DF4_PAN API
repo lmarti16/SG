@@ -261,8 +261,6 @@ mapaHIDALGO_DF4$Gene_prepo <- factor(mapaHIDALGO_DF4$Gene_prepo,
 mapa <- leaflet() %>%
     addProviderTiles(provider = "OpenStreetMap")
 
-
-
 # Agregar la primera capa de polígonos de las colonias
 mapa <- mapa %>%
     addPolygons(
@@ -475,7 +473,7 @@ mapa <- mapa %>%
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_L, "<br>",
                        "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
-        group = "Competitividad PRD"       # Nombre del grupo de la capa
+        group = "Competitividad PAN"       # Nombre del grupo de la capa
     )
 
 # Agregar capa de polígonos para Participación
@@ -543,7 +541,7 @@ mapa <- mapa %>%
 mapa <- mapa %>%
     addLayersControl(
         baseGroups = c("Manzanas","Colonias", "Secciones", "Municipios","Distrito Local","Distrito Federal"),
-        overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PRD", "Switchers","Participacion", "Lista Nominal", "Generacion","Sugerencia"),
+        overlayGroups = c("Coalición Ganadora", "Competitividad","Competitividad PAN", "Switchers","Participacion", "Lista Nominal", "Generacion","Sugerencia"),
         options = layersControlOptions(collapsed = FALSE)
     )
 
@@ -574,8 +572,8 @@ mapa <- mapa %>%
         values = ~CompetitividadP, # Establecer los valores de la leyenda
         title = "Competitividad Electoral del Frente sin el PRD",
         position = "bottomleft",
-        layerId = "LeyendaPRD",
-        group = "Competitividad PRD"  # Grupo de la leyenda
+        layerId = "LeyendaPAN",
+        group = "Competitividad PAN"  # Grupo de la leyenda
     ) %>%
     addLegend(
         data = mapaHIDALGO_DF4,
