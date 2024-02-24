@@ -183,8 +183,8 @@ Municipios_HIDALGO_DF3 <- left_join(Municipios_HIDALGO, datamun_Hidalgo, by = c(
 Municipios_HIDALGO_DF3 <- filter(Municipios_HIDALGO_DF3, DISTRITO == 3)
 
 
-DistritoL_HIDALGO_DF3 <- left_join(DISTRITOL_HIDALGO, División_HLocal, by = c("DISTRITO_L" = "DISTRITO_LOCAL"))
-DistritoL_HIDALGO_DF3 <- filter(DistritoL_HIDALGO_DF3, DISTRITO_FEDERAL == 3)
+DISTRITOL_HIDALGO <- st_transform(DISTRITOL_HIDALGO, st_crs(DISTRITOF_HIDALGO_DF3))
+DistritoL_HIDALGO_DF3 <- st_intersection(DISTRITOL_HIDALGO , DISTRITOF_HIDALGO_DF3)
 
 
 Resultados_HIDALGO_DF3$SECCION <- as.numeric(Resultados_HIDALGO_DF3$SECCION)
@@ -590,9 +590,9 @@ traidores_Hidalgo <-ggplot() +
     geom_sf(data = Municipios_HIDALGO_DF3, aes(fill = NULL), color = "black", size = 0.1, alpha = 0) +
     geom_sf_label(data = Secciones_HIDALGO_DF3, aes(label = SECCION), size = 1, fill = "white", color = "white", alpha = 0 , label.size = NA) +
     geom_sf_label(data = Municipios_HIDALGO_DF3, aes(label = NOMBRE), size = 2, fill = "white", color = "black", alpha = 0 , label.size = NA) +
-    scale_fill_manual(values = c("Fugas" = "#6F4E37", "Leales" = "red", "No aplica" = "white" ), name = "¿La sección electoral historicamente\nhabia sido priista y cambió a Morena?") +
+    scale_fill_manual(values = c("Fugas" = "brown", "Leales" = "#d29e00", "No aplica" = "white" ), name = "¿La sección electoral historicamente\nhabia sido perredistas y cambió a Morena?") +
     labs(title = "Fugas:",
-         subtitle = "Secciones electorales que habian sido priistas\ny en 2022 se fueron a morena",
+         subtitle = "Secciones electorales que habian sido perredistas\ny en 2022 se fueron a morena",
          caption = paste0("Elaborado por la Secretaría General CEN PRI\n(Fuente: INEGI e INE)")) +
     theme_economist(base_family="ITC Officina Sans") + # Usar un tema más elegante
     guides(fill = guide_legend(ncol = 3)) +
