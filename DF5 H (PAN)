@@ -171,16 +171,16 @@ Resultados_HIDALGO <- Resultados_HIDALGO %>%
 Resultados_HIDALGO <- Resultados_HIDALGO %>%
     select(-DISTRITO, -DISTRITO_L, -MUNICIPIO)
 
-Secciones_HIDALGO_DF5 <- filter(Secciones_HIDALGO,  DISTRITO == 2)
-Manzanas_HIDALGO_DF5 <- filter(Manzanas_HIDALGO,  DISTRITO_F == 2)
-DISTRITOF_HIDALGO_DF5 <- filter(DISTRITOF_HIDALGO,  DISTRITO == 2)
-Colonias_HIDALGO_DF5 <- filter(Colonias_HIDALGO, DISTRITO == 2)
+Secciones_HIDALGO_DF5 <- filter(Secciones_HIDALGO,  DISTRITO ==5)
+Manzanas_HIDALGO_DF5 <- filter(Manzanas_HIDALGO,  DISTRITO_F ==5)
+DISTRITOF_HIDALGO_DF5 <- filter(DISTRITOF_HIDALGO,  DISTRITO ==5)
+Colonias_HIDALGO_DF5 <- filter(Colonias_HIDALGO, DISTRITO ==5)
 data_HIDALGO_DF5 <- st_drop_geometry(Secciones_HIDALGO_DF5)
 Resultados_HIDALGO_DF5 <- left_join(data_HIDALGO_DF5, Resultados_HIDALGO, by = c("ENTIDAD", "SECCION"))
 Resultados_HIDALGO_DF5 <- Resultados_HIDALGO_DF5 %>% select( -"TIPO",-"CONTROL",-"GEOMETRY1_", - "ID")
 
 Municipios_HIDALGO_DF5 <- left_join(Municipios_HIDALGO, datamun_Hidalgo, by = c("MUNICIPIO"))
-Municipios_HIDALGO_DF5 <- filter(Municipios_HIDALGO_DF5, DISTRITO == 2)
+Municipios_HIDALGO_DF5 <- filter(Municipios_HIDALGO_DF5, DISTRITO ==5)
 
 
 DISTRITOL_HIDALGO <- st_transform(DISTRITOL_HIDALGO, st_crs(DISTRITOF_HIDALGO_DF5))
