@@ -185,7 +185,8 @@ Municipios_HIDALGO_DF1 <- filter(Municipios_HIDALGO_DF1, DISTRITO == 1)
 
 DistritoL_HIDALGO_DF1 <- left_join(DISTRITOL_HIDALGO, División_HLocal, by = c("DISTRITO_L" = "DISTRITO_LOCAL"))
 DistritoL_HIDALGO_DF1 <- filter(DistritoL_HIDALGO_DF1, DISTRITO_FEDERAL == 1)
-
+DistritoL_HIDALGO_DF1 <- st_transform(DistritoL_HIDALGO_DF1, st_crs(DISTRITOF_HIDALGO_DF1))
+DistritoL_HIDALGO_DF1 <- st_intersection(DistritoL_HIDALGO_DF1 , DISTRITOF_HIDALGO_DF1)
 
 Resultados_HIDALGO_DF1$SECCION <- as.numeric(Resultados_HIDALGO_DF1$SECCION)
 Resultados_HIDALGO_DF1$ENTIDAD <- as.numeric(Resultados_HIDALGO_DF1$ENTIDAD)
