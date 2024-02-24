@@ -237,6 +237,7 @@ Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>%
         TRUE ~ "NO"  # Asigna "NO" si ninguna de las condiciones se cumple
     ))
 
+export(Resultados_HIDALGO_DF1, "Resultados_HIDALGO_DF1.csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise = FALSE)
 
 Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
 
