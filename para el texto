@@ -41,6 +41,7 @@ agregar_hoja("Switchers22", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDA
 agregar_hoja("cambio partidos22",  table(Resultados_HIDALGO_DF1$NO_Mun,Resultados_HIDALGO_DF1$GANADO_G_22, Resultados_HIDALGO_DF1$Switchers22))
 agregar_hoja("Traidores", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Traidores))
 agregar_hoja("Gene_prepo", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Gene_prepo))
+agregar_hoja("cambio partidos21",  table(Resultados_HIDALGO_DF1$NO_Mun,Resultados_HIDALGO_DF1$Ganador_21, Resultados_HIDALGO_DF1$switcher))
 
 
 # Guardar el libro de Excel
