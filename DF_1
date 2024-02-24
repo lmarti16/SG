@@ -1173,7 +1173,7 @@ ggsave("D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_Sugerencia(DF1).pdf"
 
 # Lista de archivos PDF a combinar
 archivos <- c(
-    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Portada Hidalgo.pdf",
+    "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Portada Hidalgo DF1.pdf",
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_resultados24.pdf",
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoFAM.pdf",
     "D:\\52556\\Documents\\Secretaria_GralPRI\\DF1\\Mapa_SigladoSHH.pdf",
