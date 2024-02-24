@@ -463,7 +463,7 @@ mapa <- mapa %>%
                        "Porcentaje de votos por el FAM:", paste(round(porcentaje_FAM_22, 2), "%"), "<br>",
                        "Votos por el PRI:", PRI_22, "<br>",
                        "Porcentaje de votos por el PRI:", paste(round(porcentajePRI, 2), "%"), "<br>",
-                       "Votos por el PRI:", MORENA_22, "<br>",
+                       "Votos por MORENA:", MORENA_22, "<br>",
                        "Porcentaje de votos por Morena:", paste(round(porcentajeMORENA, 2), "%"), "<br>",
                        "Votos por JHH:", SHH_G_22, "<br>",
                        "Porcentaje de votos por JHH:", paste(round(porcentaje_SHH_22, 2), "%"), "<br>",
