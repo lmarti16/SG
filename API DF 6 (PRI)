@@ -39,7 +39,7 @@ Secciones_HIDALGO <- Secciones_HIDALGO %>%
 
 
 Lista_Nominal_Selected  <- Lista_Nominal_Selected  %>%
-    mutate_at(vars(-c("NOMBRE_ENTIDAD", "Gene_prepo")),
+    mutate_at(vars(-c( "Gene_prepo")),
               as.numeric)
 
 # Convert all columns to numeric
@@ -629,7 +629,8 @@ mapa <- mapa %>%
         html = "<div style='margin-bottom: 10px; text-align: center;'>
                 Distrito Federal 6 de la HIDALGO<br>
                 Elaborado por Qualia: Asesoria Especializada<br>
-                Con datos del INE y el INEGI
+                Fuente: INE, NEGI CONEVAL<br><br>
+                Dudas, comentarios e información adicional por WA: 55-6706-2281
             </div>",
         position = "bottomright"
     )
