@@ -26,6 +26,8 @@ Municipios_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MUNICI
 Secciones_switchers <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\secciones_switcher.csv")
 Colonias_HIDALGO <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
 datamun_Hidalgo <- read_sf("D:\\52556\\Documents\\Data_munHidalg.xlsx")
+sec_mex <- sec_mex %>% select( -"LISTA_NOMINAL", -"LISTA_HOMBRES",-"LISTA_MUJERES" )
+
 
 
 Colonias_HIDALGO <- filter(Colonias_HIDALGO, CVE_ENT == 13)
@@ -97,8 +99,6 @@ Municipios_HIDALGO_DF6 <- Municipios_HIDALGO[Municipios_HIDALGO$MUNICIPIO %in% M
 
 # Filtrar DistritoL_HIDALGO
 DistritoL_HIDALGO_DF6 <- DistritoL_HIDALGO[DistritoL_HIDALGO$DISTRITO_L %in% Valores_DL_DF6, ]
-
-Resultados_HIDALGO <- Resultados_HIDALGO %>% select( -"LISTA_NOMINAL")
 
 mapaHIDALGO_DF6 <- left_join(Secciones_HIDALGO_DF6, Resultados_HIDALGO, by = c("SECCION", "ENTIDAD"))
 
