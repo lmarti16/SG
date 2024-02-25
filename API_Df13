@@ -14,6 +14,7 @@ library(pdftools)
 library(leaflet)
 library(rio)
 library(stringr)
+library(RColorBrewer)
 
 # Leer archivo SHP usando read_sf()
 Manzanas_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\MANZANA.shp")
@@ -28,11 +29,11 @@ Colonias_MX <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
 ESEM_ValleMX <- read_sf("D:\\Descargas\\Socio-economica Edomex-cdmx\\VALLE_DE_MEXICO.shp")
 ESEM_CDMX <- filter(ESEM_ValleMX, CVE_ENT == "09")
 ESEM_CDMX <- st_transform(ESEM_CDMX, st_crs(sec_mex))
-Circunscripcion <- read_sf("D:\\Descargas\\poligonos_cdmx\\circunscripcionesDT\\06.kml") #Usa el No. de la alcaldía
+Circunscripcion <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Circunscripcion_CDMX.csv")
 
-Circunscripcion <- Circunscripcion  %>%
-    filter(grepl("C-", Name))
-Circunscripcion <- st_zm(Circunscripcion)
+
+Circunscripcion$Circunscripción_CDMX  <- as.numeric(Circunscripcion$Circunscripción_CDMX)
+Circunscripcion$SECCION <- as.numeric(Circunscripcion$SECCION)
 
 Secciones_Switcher$SECCION <- as.numeric(Secciones_Switcher$SECCION)
 Secciones_Switcher$ENTIDAD <- as.numeric(Secciones_Switcher$ENTIDAD)
@@ -87,6 +88,7 @@ Resultados <- Resultados %>%
 
 Resultados_CDMX <- filter(Resultados, ENTIDAD == 9)
 Secciones_CDMX <- filter(sec_mex, ENTIDAD == 9)
+Secciones_CDMX <- left_join(Secciones_CDMX, Circunscripcion, by = c("SECCION"))
 Secciones_CDMX_DF13<- filter(Secciones_CDMX, DISTRITO_FEDERAL== 13)
 Manzanas_CDMX_DF13 <- filter(Manzanas_CDMX, DISTRITO_F == 13)
 # Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_CDMX_DF13 
@@ -243,7 +245,6 @@ DistritoF_CDMX_DF13 <- st_transform(DistritoF_CDMX_DF13, crs = 4326)
 Municipios_CDMX_DF13 <- st_transform(Municipios_CDMX_DF13, crs = 4326)
 DistritoL_CDMX_DF13 <- st_transform(DistritoL_CDMX_DF13, crs = 4326)
 Colonias_CDMX_DF13 <- st_transform(Colonias_CDMX_DF13, crs = 4326)
-Circunscripcion<- st_transform(Circunscripcion, crs = 4326)
 
 # Renombrar los resultados 
 mapa_DF13$GanadorC_21 <- recode(mapa_DF13$GanadorC_21,
@@ -333,6 +334,13 @@ colores_ESEM <- colorFactor(
 ESEM_CDMX_DF13$NIVEL <- factor(ESEM_CDMX_DF13$NIVEL,
                              levels = c("Muy Alto", "Alto", "Medio alto", "Medio", "Medio bajo", "Bajo", "Muy Bajo", "No determinado"))
 
+# Elegir una paleta de colores con suficientes colores distintos para 9 valores
+paleta_colores <- brewer.pal(n = 9, name = "Paired")
+
+# Crear la función de mapeo de colores usando colorFactor()
+colores_Circunscripcion <- colorFactor(palette = paleta_colores, domain = Secciones_CDMX_DF13$Circunscripción_CDMX)
+
+
 # Crear un mapa base con el fondo de OpenStreetMap
 mapa <- leaflet() %>%
     addProviderTiles(provider = "OpenStreetMap")
@@ -389,11 +397,11 @@ mapa <- mapa %>%
     )
 mapa <- mapa %>%
     addPolygons(
-        data = Circunscripcion,
-        fillColor = "white",    # Color de fondo blanco
+        data = Secciones_CDMX_DF13,
+        fillColor = ~colores_Circunscripcion(Circunscripción_CDMX), # Usar la función de colores según la Circunscripción_CDMX
         fillOpacity = 0.5,      # Transparencia del fondo
-        label = ~Name,
-        color = "black",        # Color de los bordes
+        label = ~Circunscripción_CDMX,
+        color = NA,        # Color de los bordes
         weight = 1,             # Grosor de los bordes
         opacity = 0.8,          # Opacidad de los bordes
         group = "Circunscripciones"     # Nombre del grupo de la capa
