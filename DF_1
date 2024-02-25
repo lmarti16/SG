@@ -14,6 +14,7 @@ library(wesanderson)
 library(pdftools)
 library(stringr)
 library(rio)
+library(openxlsx)
 
 # Leer archivo SHP usando read_sf()
 Manzanas_HIDALGO <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\13 HIDALGO\\MANZANA.shp")
@@ -241,6 +242,39 @@ export(Resultados_HIDALGO_DF1, "Resultados_HIDALGO_DF1.csv", rio = "csv", fileEn
 
 Resultados_HIDALGO_DF1 <- Resultados_HIDALGO_DF1 %>% select( -"DISTRITO",-"DISTRITO_L",-"MUNICIPIO")
 
+# Crear un libro de Excel
+wb <- createWorkbook()
+
+# Crear una función para agregar una hoja con el formato deseado
+agregar_hoja <- function(nombre_hoja, datos) {
+  addWorksheet(wb, sheetName = nombre_hoja)
+  writeData(wb, sheet = nombre_hoja, x = datos, startCol = 1, startRow = 1)
+}
+
+# Guardar cada tabla como una pestaña
+agregar_hoja("Compe_FAM", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$quintilF))
+agregar_hoja("Compe_SHH", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$quintilM))
+agregar_hoja("Diferencia_Comparada", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$quintilD))
+agregar_hoja("Ganador_12", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Ganador_12))
+agregar_hoja("Ganador_15", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Ganador_15))
+agregar_hoja("Ganador_18", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Ganador_18))
+agregar_hoja("Ganador_21", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Ganador_21))
+agregar_hoja("Ganador_22", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$GANADO_G_22))
+agregar_hoja("Coalicion21", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$GANADOR_21))
+agregar_hoja("Coalicion22", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$GANADORG_C_22))
+agregar_hoja("Cambio_elector", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Cambio_elector))
+agregar_hoja("Participacion", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$quintilparti))
+agregar_hoja("Lista_Nominal", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$quintilLN))
+agregar_hoja("Switchers21", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Switcher))
+agregar_hoja("Switchers22", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Switchers22))
+agregar_hoja("cambio partidos22",  table(Resultados_HIDALGO_DF1$NO_Mun,Resultados_HIDALGO_DF1$GANADO_G_22, Resultados_HIDALGO_DF1$Switchers22))
+agregar_hoja("Traidores", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Traidores))
+agregar_hoja("Gene_prepo", table(Resultados_HIDALGO_DF1$NO_Mun, Resultados_HIDALGO_DF1$Gene_prepo))
+agregar_hoja("cambio partidos21",  table(Resultados_HIDALGO_DF1$NO_Mun,Resultados_HIDALGO_DF1$Ganador_21, Resultados_HIDALGO_DF1$switcher))
+
+
+# Guardar el libro de Excel
+saveWorkbook(wb, "Resultados_HIDALGO_DF1.xlsx", overwrite = TRUE)
 # Unir los dataframes por SECCION y ENTIDAD 
 mapaHIDALGO_DF1 <- left_join(Secciones_HIDALGO_DF1, Resultados_HIDALGO_DF1, by = c("SECCION", "ENTIDAD"))
 
