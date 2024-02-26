@@ -30,10 +30,13 @@ ESEM_ValleMX <- read_sf("D:\\Descargas\\Socio-economica Edomex-cdmx\\VALLE_DE_ME
 ESEM_CDMX <- filter(ESEM_ValleMX, CVE_ENT == "09")
 ESEM_CDMX <- st_transform(ESEM_CDMX, st_crs(sec_mex))
 Circunscripcion <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Circunscripciones.shp")
+Nocircunscripcion <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Circunscripcion_CDMX.csv")
 
 Circunscripcion  <- Circunscripcion  %>%
     rename(MUNICIPIO = MUNICIP, NOMBRE_MUNICIPIO = NOMBRE_, Circunscripción_CDMX = Cr_CDMX)
 
+Nocircunscripcion$Circunscripción_CDMX  <- as.numeric(Nocircunscripcion$Circunscripción_CDMX)
+Nocircunscripcion$SECCION <- as.numeric(Nocircunscripcion$SECCION)
 Secciones_Switcher$SECCION <- as.numeric(Secciones_Switcher$SECCION)
 Secciones_Switcher$ENTIDAD <- as.numeric(Secciones_Switcher$ENTIDAD)
 
@@ -87,6 +90,7 @@ Resultados <- Resultados %>%
 
 Resultados_CDMX <- filter(Resultados, ENTIDAD == 9)
 Secciones_CDMX <- filter(sec_mex, ENTIDAD == 9)
+Secciones_CDMX <- left_join(Secciones_CDMX, Nocircunscripcion, by = c("SECCION"))
 Secciones_CDMX_MH<- filter(Secciones_CDMX, MUNICIPIO == 16)
 Manzanas_CDMX_MH <- filter(Manzanas_CDMX, MUNICIPIO == 16)
 Municipios_CDMX_MH<- filter(Municipios_CDMX, MUNICIPIO == 16)
@@ -97,8 +101,12 @@ Circunscripcion_CDMX_MH <- filter(Circunscripcion, MUNICIPIO == 16)
 Valores_DF_MH <- unique(Secciones_CDMX_MH$DISTRITO_FEDERAL)
 Valores_DL_MH <- unique(Secciones_CDMX_MH$DISTRITO_LOCAL)
 
-ESEM_CDMX <- st_transform(ESEM_CDMX, st_crs(Secciones_CDMX_MH ))
-ESEM_CDMX_MH<- st_intersection(Secciones_CDMX_MH, ESEM_CDMX )
+
+ESEM_CDMX <- st_transform(ESEM_CDMX, st_crs(Municipios_CDMX_MH ))
+ESEM_CDMX_MH<- st_intersection(Municipios_CDMX_MH, ESEM_CDMX )
+
+ESEM_CDMX_MH <- st_transform(ESEM_CDMX_MH, st_crs(Secciones_CDMX_MH))
+ESEM_CDMX_MH<- st_intersection(Secciones_CDMX_MH, ESEM_CDMX_MH )
 
 Colonias_CDMX <- filter(Colonias_MX, CVE_ENT == "09")
 Colonias_CDMX <- st_transform(Colonias_CDMX, st_crs(Municipios_CDMX_MH ))
@@ -195,7 +203,7 @@ Resultados_MH <- Resultados_MH %>%
 
 Resultados_MH <- Resultados_MH %>%
     select(-NOMBRE_ENTIDAD, -MUNICIPIO, -NOMBRE_MUNICIPIO, 
-           -DISTRITO_FEDERAL, -NOMBRE_DISTRITO_FEDERAL, -DISTRITO_LOCAL)
+           -DISTRITO_FEDERAL, -NOMBRE_DISTRITO_FEDERAL, -DISTRITO_LOCAL,-Circunscripción_CDMX)
 
 mapa_MH <- left_join(Secciones_CDMX_MH , Resultados_MH, by = c("SECCION", "ENTIDAD"))
 
@@ -338,6 +346,12 @@ colores_ESEM <- colorFactor(
 ESEM_CDMX_MH$NIVEL <- factor(ESEM_CDMX_MH$NIVEL,
                              levels = c("Muy Alto", "Alto", "Medio alto", "Medio", "Medio bajo", "Bajo", "Muy Bajo", "No determinado"))
 
+
+ESEM_CDMX_MH <- ESEM_CDMX_MH %>%
+  filter(st_geometry_type(geom) %in% c("POLYGON", "MULTIPOLYGON")) %>%
+  st_cast("POLYGON")
+
+
 # Crear un mapa base con el fondo de OpenStreetMap
 mapa <- leaflet() %>%
     addProviderTiles(provider = "OpenStreetMap")
@@ -463,6 +477,7 @@ mapa <- mapa %>%
                        "Porcentaje de votos por SHH en la última eleccción:", paste(round(porSHH_21, 2), "%"), "<br>",
                        "Votos Nulos en la última eleccción:", NUM_VOTOS_NULOS_21, "<br>","<br>",
 
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_LOCAL, "<br>",
                        "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
@@ -483,7 +498,9 @@ mapa <- mapa %>%
                        "Coalición Ganadora en 2021:", GanadorC_21, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
                        "Partido preponderante en 2018:", Ganador_18, "<br>",
-                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>","<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD,"<br>","<br>",
+
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_LOCAL, "<br>",
                        "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
@@ -523,10 +540,12 @@ mapa <- mapa %>%
                        "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
                        "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
                        "Lista Nominal para 2024:", LISTA_NOMINAL, "<br>",
-                       "Participación:", paste(round(participacion*1, 2), "%"), "<br>", "<br>",
+                       "Participación:", paste(round(participacion*1, 2), "%"),"<br>","<br>",
+
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_LOCAL, "<br>",
-                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
         group = "Sugerencia"       # Nombre del grupo de la capa
     ) 
 # Agregar la quinta capa de polígonos con los datos de mapa_MH y el color según la competitividad
@@ -543,7 +562,9 @@ mapa <- mapa %>%
                       "Intervalo de competividad:", quintilD, "<br>",
                        "Coalición Ganadora en 2021:", GanadorC_21, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
-                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>","<br>",
+
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_LOCAL, "<br>",
                        "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
@@ -572,10 +593,12 @@ mapa <- mapa %>%
                        "Porcentaje de votos por JHH:", paste(round(porSHH_21, 2), "%"), "<br>",
                        "Coalición Ganadora actual:", GanadorC_21, "<br>",
                        "Partido preponderante en 2021:", Ganador_21, "<br>",
-                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>","<br>",
+
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_LOCAL, "<br>",
-                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
         group = "Competitividad PRI"       # Nombre del grupo de la capa
     )
 
@@ -590,10 +613,12 @@ mapa <- mapa %>%
         weight = 1,
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
                       "En la sección hay:", Porcen_parti, "<br>",
-                      "Participación:", paste(round(participacion*1, 2), "%"), "<br>", "<br>",
+                      "Participación:", paste(round(participacion*1, 2), "%"), "<br>","<br>",
+
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_LOCAL, "<br>",
-                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
     group = "Participacion"
   )
 
@@ -606,8 +631,12 @@ mapa <- mapa %>%
         color = "white",
         weight = 1,
         popup = ~paste("Estrato:", NIVEL, "<br>",
-                       "Número de Seccion:", SECCION, "<br>",
-                       "Numero de AGEB:", AGEB),
+                       "Número de Seccion:", SECCION, "<br>","<br>",
+
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
         group = "ESEM"       # Nombre del grupo de la capa
     ) 
 
@@ -622,10 +651,12 @@ mapa <- mapa %>%
         weight = 1,
         popup = ~paste("Numero de Sección:", SECCION, "<br>",
                       "En la sección la lista nominal es:", Tamaños_lista, "<br>",
-                       "Lista Nominal para 2024:", LISTA_NOMINAL, "<br>", "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL, "<br>","<br>",
+
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
                        "Municipio:", NOMBRE_MUNICIPIO, "<br>",
                        "Distrito Local:", DISTRITO_LOCAL, "<br>",
-                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
         group = "Lista Nominal"
     )
 # Agregar capa de polígonos para Gener
@@ -651,7 +682,11 @@ mapa <- mapa %>%
                        "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
                        "Electores Hombres:", LISTA_HOMBRES, "<br>",
                        "Electores  Mujeres:", LISTA_MUJERES, "<br>",
-                       "Lista Nominal para 2024:", LISTA_NOMINAL),
+                      "Lista Nominal para 2024:", LISTA_NOMINAL, "<br>","<br>",
+                       "Circunscripción:", Circunscripción_CDMX, "<br>",
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
         group = "Generacion"
     )
 # Agregar el control de capas al mapa
