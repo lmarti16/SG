@@ -1,0 +1,758 @@
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(leaflet)
+library(rio)
+library(stringr)
+library(RColorBrewer)
+
+# Leer archivo SHP usando read_sf()
+Manzanas_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\MANZANA.shp")
+sec_mex <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
+DistritoF_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\DISTRITO_FEDERAL.shp")
+DistritoL_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\DISTRITO_LOCAL.shp")
+Resultados <- read_csv("D:\\52556\\Documents\\Secretaria_GralPRI\\Resultados_resec.csv")
+Lista_Nominal_Selected <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\2024_LN.csv")
+Municipios_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\MUNICIPIO.shp")
+Secciones_Switcher <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\secciones_switcher.csv")
+Colonias_MX <- read_sf("D:\\Descargas\\imc2020_shp\\colonias_imc2020.shp")
+ESEM_ValleMX <- read_sf("D:\\Descargas\\Socio-economica Edomex-cdmx\\VALLE_DE_MEXICO.shp")
+ESEM_CDMX <- filter(ESEM_ValleMX, CVE_ENT == "09")
+ESEM_CDMX <- st_transform(ESEM_CDMX, st_crs(sec_mex))
+Circunscripcion <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\Circunscripciones.shp")
+
+Circunscripcion  <- Circunscripcion  %>%
+    rename(MUNICIPIO = MUNICIP, NOMBRE_MUNICIPIO = NOMBRE_, Circunscripción_CDMX = Cr_CDMX)
+
+Secciones_Switcher$SECCION <- as.numeric(Secciones_Switcher$SECCION)
+Secciones_Switcher$ENTIDAD <- as.numeric(Secciones_Switcher$ENTIDAD)
+
+Lista_Nominal_Selected <- Lista_Nominal_Selected %>%
+  mutate(across(-Gene_prepo, as.numeric))
+
+sec_mex <- sec_mex %>%
+    select(-PADRON_HOMBRES, -PADRON_MUJERES,  -PADRON_ELECTORAL, -LISTA_HOMBRES, -LISTA_MUJERES, -LISTA_NOMINAL)
+
+# Reemplaza los espacios por saltos de línea en la columna NOMBRE
+Municipios_CDMX$NOMBRE <- str_replace_all(Municipios_CDMX$NOMBRE, " ", "\n")
+
+# Suponiendo que tu dataframe se llama 'Municipios_HIDALGO'
+Municipios_CDMX <- Municipios_CDMX %>%
+  mutate(NOMBRE = paste0(tools::toTitleCase(tolower(NOMBRE))))
+
+# Renombrar las clases sociales
+ESEM_CDMX$NIVEL <- recode(ESEM_CDMX$NIVEL,
+                         "A/B" = "Muy Alto",
+                         "C" = "Alto",
+                         "C-" = "Medio alto",
+                         "C+" = "Medio",
+                         "D" = "Medio bajo",
+                         "D+" = "Bajo",
+                         "E" = "Muy Bajo",
+                         "N/D" = "No determinado")
+
+# Asumiendo que tu tibble se llama Secciones_Switcher
+Secciones_Switcher <- Secciones_Switcher %>%
+  mutate(
+    Switcher = if_else(Ganador_21 != Ganador_18, "SI", "NO"),
+    Switcher_coalición = case_when(
+      Ganador_18 %in% c("MORENA", "PT", "ES") & Ganador_21 %in% c("PRI", "PAN", "PRD") ~ "Cambió a FAM",
+      Ganador_18 %in% c("PRI", "PAN", "PRD") & Ganador_21 %in% c("MORENA", "PT", "ES", "PVEM") ~ "Cambio a SHH",
+      TRUE ~ NA_character_ # Para cualquier otra condición no especificada
+    )
+  )
+
+
+Resultados <- Resultados %>%
+    select(-CIRCUNSCRIPCION, -NOMBRE_ESTADO, -ID_DISTRITO_FEDERAL, 
+           -CABECERA_DISTRITAL_FEDERAL, -ID_MUNICIPIO, -MUNICIPIO, -CASILLAS)
+
+# Convertir todas las columnas a numérico
+Resultados <- Resultados %>%
+    mutate(across(everything(), as.numeric))
+
+# Renombrar columnas excepto las especificadas
+Resultados <- Resultados %>%
+    rename_with(~ paste0(., "_21"), -c(FAM_21, SHH_21, ENTIDAD, SECCION))
+
+Resultados_CDMX <- filter(Resultados, ENTIDAD == 9)
+Secciones_CDMX <- filter(sec_mex, ENTIDAD == 9)
+Secciones_CDMX_TLALPAN<- filter(Secciones_CDMX, MUNICIPIO == 12)
+Manzanas_CDMX_TLALPAN <- filter(Manzanas_CDMX, MUNICIPIO == 12)
+Municipios_CDMX_TLALPAN<- filter(Municipios_CDMX, MUNICIPIO == 12)
+Circunscripcion_CDMX_TLALPAN <- filter(Circunscripcion, MUNICIPIO == 12)
+
+
+# Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_CDMX_TLALPAN 
+Valores_DF_TLALPAN <- unique(Secciones_CDMX_TLALPAN$DISTRITO_FEDERAL)
+Valores_DL_TLALPAN <- unique(Secciones_CDMX_TLALPAN$DISTRITO_LOCAL)
+
+ESEM_CDMX <- st_transform(ESEM_CDMX, st_crs(Secciones_CDMX_TLALPAN ))
+ESEM_CDMX_TLALPAN<- st_intersection(Secciones_CDMX_TLALPAN, ESEM_CDMX )
+
+Colonias_CDMX <- filter(Colonias_MX, CVE_ENT == "09")
+Colonias_CDMX <- st_transform(Colonias_CDMX, st_crs(Municipios_CDMX_TLALPAN ))
+Colonias_CDMX_TLALPAN <- st_intersection(Municipios_CDMX_TLALPAN , Colonias_CDMX)
+
+# Filtrar DistritoF_CDMX 
+DistritoF_CDMX_TLALPAN <- DistritoF_CDMX[DistritoF_CDMX$DISTRITO %in% Valores_DF_TLALPAN, ]
+
+# Filtrar DistritoL_CDMX
+DistritoL_CDMX_TLALPAN <- DistritoL_CDMX[DistritoL_CDMX$DISTRITO_L %in% Valores_DL_TLALPAN, ]
+
+# Unir los dataframes por SECCION y ENTIDAD
+Resultados_TLALPAN <- left_join(Secciones_CDMX_TLALPAN, Resultados_CDMX, by = c("SECCION", "ENTIDAD"))
+Resultados_TLALPAN <- st_drop_geometry(Resultados_TLALPAN)
+Resultados_TLALPAN <- left_join(Resultados_TLALPAN, Secciones_Switcher, by = c("SECCION", "ENTIDAD"))
+Resultados_TLALPAN <- left_join(Resultados_TLALPAN, Lista_Nominal_Selected, by = c("SECCION", "ENTIDAD"))
+
+Resultados_TLALPAN <- Resultados_TLALPAN %>% 
+    mutate( porFAM_21 = (FAM_21 /TOTAL_VOTOS_21)*100) %>% 
+    mutate( porPRI_21 = (PRI_21 /TOTAL_VOTOS_21)*100) %>% 
+    mutate( porPRD_21 = (PRD_21 /TOTAL_VOTOS_21)*100) %>% 
+    mutate( porMORENA_21 = (MORENA_21 /TOTAL_VOTOS_21)*100) %>% 
+    mutate( porSHH_21 = (SHH_21 /TOTAL_VOTOS_21)*100) %>% 
+    mutate( participacion = (TOTAL_VOTOS_21 /LISTA_NOMINAL_21)*100) %>% 
+    mutate( diferencia = porFAM_21 - porSHH_21) %>%
+    mutate( diferenciaPRD = FAM_21 - PRD_21) 
+
+# Crear quintiles
+quintilesF <- quantile(Resultados_TLALPAN$diferenciaPRD, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesM <- quantile(Resultados_TLALPAN$porSHH_21, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesD <- quantile(Resultados_TLALPAN$diferencia, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesparti <- quantile(Resultados_TLALPAN$participacion, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+quintilesLN <- quantile(Resultados_TLALPAN$LISTA_NOMINAL_21, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
+
+# Definir etiquetas personalizadas
+labels_custom <- function(breaks) {
+  n <- length(breaks) - 1
+  labels <- character(n)
+  for (i in 1:n) {
+    labels[i] <- ifelse(i < n, paste0("(", ceiling(breaks[i]), ", ", floor(breaks[i + 1]), "]"), paste0("[", ceiling(breaks[i]), ", ", ceiling(breaks[i + 1]), "]"))
+  }
+  return(labels)
+}
+
+# Agrega columna con quintiles y etiquetas personalizadas
+Resultados_TLALPAN$quintilF <- cut(Resultados_TLALPAN$diferenciaPRD, breaks = quintilesF, include.lowest = TRUE, labels = labels_custom(quintilesF))
+Resultados_TLALPAN$quintilM <- cut(Resultados_TLALPAN$porSHH_21, breaks = quintilesM, include.lowest = TRUE, labels = labels_custom(quintilesM))
+Resultados_TLALPAN$quintilD <- cut(Resultados_TLALPAN$diferencia, breaks = quintilesD, include.lowest = TRUE, labels = labels_custom(quintilesD))
+Resultados_TLALPAN$quintilparti <- cut(Resultados_TLALPAN$participacion, breaks = quintilesparti, include.lowest = TRUE, labels = labels_custom(quintilesparti))
+Resultados_TLALPAN$quintilLN <- cut(Resultados_TLALPAN$LISTA_NOMINAL_21, breaks = quintilesLN, include.lowest = TRUE, labels = labels_custom(quintilesLN))
+
+Resultados_TLALPAN <- Resultados_TLALPAN %>%
+    rowwise() %>%
+    mutate(GanadorC_21 = {
+        votos <- c(FAM = FAM_21, SHH = SHH_21, MC = MC_21, RSP = RSP_21,ES = PES_21,FXM = FXM_21)
+        votos[is.na(votos)] <- 0 # Convertir NA a 0
+        if (all(votos == 0)) {
+            NA_character_ # Retornar NA si todos los votos son 0
+        } else {
+            names(which.max(votos))
+        }
+    })
+
+Resultados_TLALPAN <- Resultados_TLALPAN %>%
+    rowwise() %>%
+    mutate(Ganador_21 = {
+        votos <- c(PAN = PAN_21, PRI = PRI_21, PRD = PRD_21, PVEM = PVEM_21, PT = PT_21, MC = MC_21, RSP = RSP_21,ES = PES_21,MORENA = MORENA_21,FXM = FXM_21)
+        votos[is.na(votos)] <- 0 # Convertir NA a 0
+        if (all(votos == 0)) {
+            NA_character_ # Retornar NA si todos los votos son 0
+        } else {
+            names(which.max(votos))
+        }
+    })
+
+Resultados_TLALPAN <- Resultados_TLALPAN %>%
+    mutate(Sugerencia = case_when(
+        # Prioritaria: La más alta participación y lista nominal, y en el quintil 3 de diferencia
+        quintilLN == labels_custom(quintilesLN)[5] & quintilD == labels_custom(quintilesD)[5] & quintilparti == labels_custom(quintilesparti)[3] ~ "Sugerencia prioritaria",
+        
+        # Secundaria: Primera o segunda más alta participación, también primera o segunda más alta lista nominal, y en el quintil 3 de diferencia
+        (quintilLN %in% c(labels_custom(quintilesLN)[4], labels_custom(quintilesLN)[5]) &
+             quintilparti %in% c(labels_custom(quintilesparti)[4], labels_custom(quintilesparti)[5]) &
+             quintilD == labels_custom(quintilesD)[3]) ~ "Sugerencia secundaria",
+        
+        # Terciaria: En el quintil 3 de diferencia, o todas las secciones en los quintiles 4-5 de LN o de participación
+        quintilD == labels_custom(quintilesD)[3] |
+            quintilLN %in% c(labels_custom(quintilesLN)[5]) |
+            quintilparti %in% c(labels_custom(quintilesparti)[5]) ~ "Sugerencia terciaria",
+        
+        # Caso predeterminado
+        TRUE ~ "Sección no sugerida"
+    ))
+
+Resultados_TLALPAN <- Resultados_TLALPAN %>%
+    select(-NOMBRE_ENTIDAD, -MUNICIPIO, -NOMBRE_MUNICIPIO, 
+           -DISTRITO_FEDERAL, -NOMBRE_DISTRITO_FEDERAL, -DISTRITO_LOCAL)
+
+mapa_TLALPAN <- left_join(Secciones_CDMX_TLALPAN , Resultados_TLALPAN, by = c("SECCION", "ENTIDAD"))
+
+# Corrección en la definición de rangosQuintiles para mantener la consistencia
+rangosQuintiles <- list(
+  F = quintilesF,
+  M = quintilesM,
+  D = quintilesD,
+  P = quintilesparti, # Cambiado a quintilesparti para mantener la consistencia
+  LN = quintilesLN
+)
+
+# Corrección en la creación de las columnas CompetitividadD y CompetitividadP
+mapa_TLALPAN <- mapa_TLALPAN %>%
+  mutate(CompetitividadD = case_when(
+    quintilD == labels_custom(quintilesD)[1] ~ "Muy poca Competitividad",
+    quintilD == labels_custom(quintilesD)[2] ~ "Poca Competitividad",
+    quintilD == labels_custom(quintilesD)[3] ~ "Competitividad media",
+    quintilD == labels_custom(quintilesD)[4] ~ "Alta Competitividad",
+    quintilD == labels_custom(quintilesD)[5] ~ "Muy alta Competitividad"
+  )) %>%
+  mutate(CompetitividadP = case_when(
+    quintilF == labels_custom(quintilesF)[1] ~ "Muy poca Competitividad",
+    quintilF == labels_custom(quintilesF)[2] ~ "Poca Competitividad",
+    quintilF == labels_custom(quintilesF)[3] ~ "Competitividad media",
+    quintilF == labels_custom(quintilesF)[4] ~ "Alta Competitividad",
+    quintilF == labels_custom(quintilesF)[5] ~ "Muy alta Competitividad"
+  )) %>%
+  mutate(Tamaños_lista = case_when(
+    quintilLN == labels_custom(quintilesLN)[1] ~ "La más baja",
+    quintilLN == labels_custom(quintilesLN)[2] ~ "Baja",
+    quintilLN == labels_custom(quintilesLN)[3] ~ "Media",
+    quintilLN == labels_custom(quintilesLN)[4] ~ "Alta",
+    quintilLN == labels_custom(quintilesLN)[5] ~ "La más alta"
+  )) %>%
+  mutate(Porcen_parti = case_when(
+    quintilparti == labels_custom(quintilesparti)[1] ~ "Muy poca participación",
+    quintilparti == labels_custom(quintilesparti)[2] ~ "Poca participación",
+    quintilparti == labels_custom(quintilesparti)[3] ~ "Participación media",
+    quintilparti == labels_custom(quintilesparti)[4] ~ "Alta participación",
+    quintilparti == labels_custom(quintilesparti)[5] ~ "Muy alta participación"
+  ))
+
+
+# Transformar sistema de coordenadas
+mapa_TLALPAN <- st_transform(mapa_TLALPAN, crs = 4326)
+Secciones_CDMX_TLALPAN<- st_transform(Secciones_CDMX_TLALPAN , crs = 4326)
+Manzanas_CDMX_TLALPAN <- st_transform(Manzanas_CDMX_TLALPAN, crs = 4326)
+DistritoF_CDMX_TLALPAN <- st_transform(DistritoF_CDMX_TLALPAN, crs = 4326)
+Municipios_CDMX_TLALPAN <- st_transform(Municipios_CDMX_TLALPAN, crs = 4326)
+DistritoL_CDMX_TLALPAN <- st_transform(DistritoL_CDMX_TLALPAN, crs = 4326)
+Colonias_CDMX_TLALPAN <- st_transform(Colonias_CDMX_TLALPAN, crs = 4326)
+ESEM_CDMX_TLALPAN<- st_transform(ESEM_CDMX_TLALPAN, crs = 4326)
+
+# Renombrar los resultados 
+mapa_TLALPAN$GanadorC_21 <- recode(mapa_TLALPAN$GanadorC_21,
+                                  "EMPATE" = "Empate",
+                                  "FAM" = "Fuerza & Corazón por México",
+                                  "SHH" = "Sigamos Hacemos Historia",
+                                  "MC" = "Movimiento Ciudadano")
+
+# Reordenar los niveles del factor Sugerencia en el dataframe mapa_TLALPAN
+mapa_TLALPAN$Sugerencia <- factor(mapa_TLALPAN$Sugerencia,
+                                     levels = c("Sugerencia prioritaria", "Sugerencia secundaria", "Sugerencia terciaria","Sección no sugerida"))
+
+# Definir los colores para cada nivel de sugerencia
+colores_SUGERENCIA <- colorFactor(
+    palette = c("red", "darkblue","yellow", "white"), 
+                                     levels = c("Sugerencia prioritaria", "Sugerencia secundaria", "Sugerencia terciaria","Sección no sugerida"))
+
+# Reordenar los niveles del factor Ganador en 2021
+mapa_TLALPAN$GanadorC_21 <- factor(mapa_TLALPAN$GanadorC_21,
+                                     levels = c("Sigamos Hacemos Historia", "Fuerza & Corazón por México", "Movimiento Ciudadano","Empate"))
+
+# Definir los colores para cada Ganador Coalición
+colores_GanadorC_21 <- colorFactor(
+    palette = c("purple", "brown", "darkblue"), 
+    levels = c("Empate", "Sigamos Hacemos Historia", "Fuerza & Corazón por México"))
+
+# Reordenar los niveles del factor CompetitividadD
+mapa_TLALPAN$CompetitividadD <- factor(mapa_TLALPAN$CompetitividadD,
+                                          levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
+
+# Definir los colores para cada nivel de competitividadD
+colores_CompetitividadD <- colorFactor(
+    palette = c("#66BD63", "#e5be01", "#006837", "#A50026", "#F46D43"), 
+    domain = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
+
+# Reordenar los niveles del factor CompetitividadP
+mapa_TLALPAN$CompetitividadP <- factor(mapa_TLALPAN$CompetitividadP,
+                                          levels = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
+# Definir los colores para cada nivel de competitividadP
+colores_CompetitividadP <- colorFactor(
+    palette = c("#66C2A5", "#E6F598", "#3288BD", "#9E0142", "#FDAE61"), 
+    domain = c("Muy poca Competitividad", "Poca Competitividad", "Competitividad media", "Alta Competitividad", "Muy alta Competitividad"))
+
+# Reordenar los niveles del factor Switcher
+mapa_TLALPAN$Switcher <- factor(mapa_TLALPAN$Switcher,
+                                      levels = c("NO", "SI"))
+# Definir los colores para Switcher
+colores_Switcher <- colorFactor(
+    palette = c("white", "#4B0082"), 
+    levels = c("NO", "SI"))
+
+# Reordenar los niveles del factor LN en el dataframe mapa_TLALPAN
+mapa_TLALPAN$Tamaños_lista <- factor(mapa_TLALPAN$Tamaños_lista,
+                                     levels = c("La más baja", "Baja", "Media","Alta","La más alta"))
+
+# Definir los colores para cada nivel de Lista Nominal
+colores_LN <- colorFactor(
+    palette = c("#d95f0e", "#fec44f", "#993404", "#ffffd4", "#fe9929"), 
+    domain = c("La más baja", "Baja", "Media","Alta","La más alta"))
+
+# Reordenar los niveles del factor Participacion en el dataframe LN
+mapa_TLALPAN$Porcen_parti <- factor(mapa_TLALPAN$Porcen_parti,
+                                     levels = c("Muy poca participación", "Poca participación", "Participación media","Alta participación","Muy alta participación"))
+
+# Definir los colores para cada nivel de Participacion
+colores_participacion <- colorFactor(
+    palette = c("#2c7fb8", "#253494", "#ffffcc", "#41b6c4", "#a1dab4"), 
+    domain = c("Muy poca participación", "Poca participación", "Participación media","Alta participación","Muy alta participación"))
+
+# Definir los colores para cada generación correctamente
+colores_Gene <- colorFactor(
+    palette = c("#4DAF4A", "#984EA3", "#E41A1C", "#377EB8", "#EFB752", "grey"), 
+    domain = c("GEN_Z", "MILLENNIALS", "GEN_X", "BOOMERS", "SILENT", "Sin datos")
+)
+
+# Reordenar los niveles del factor Participacion en el dataframe LN
+mapa_TLALPAN$Gene_prepo <- factor(mapa_TLALPAN$Gene_prepo,
+                                     levels = c("GEN_Z","MILLENNIALS", "GEN_X", "BOOMERS","SILENT","Sin datos"))
+
+# Define los colores para cada nivel de ESEM
+colores_ESEM <- colorFactor(
+    palette = c("blue", "#00CC00", "#99FF99", "#FFFF99", "#FFCC99", "#FF3300", "brown", "#808080"),
+    levels = c("Muy Alto", "Alto", "Medio alto", "Medio", "Medio bajo", "Bajo", "Muy Bajo", "No determinado")
+)
+
+# Reordenar los niveles del factor ESEM
+ESEM_CDMX_TLALPAN$NIVEL <- factor(ESEM_CDMX_TLALPAN$NIVEL,
+                             levels = c("Muy Alto", "Alto", "Medio alto", "Medio", "Medio bajo", "Bajo", "Muy Bajo", "No determinado"))
+
+# Crear un mapa base con el fondo de OpenStreetMap
+mapa <- leaflet() %>%
+    addProviderTiles(provider = "OpenStreetMap")
+
+# Agregar la primera capa de polígonos de las colonias
+mapa <- mapa %>%
+    addPolygons(
+        data = Colonias_CDMX_TLALPAN,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~COLONIA,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Colonias"     # Nombre del grupo de la capa
+    )
+
+# Agregar la primera capa de polígonos de manzanas
+mapa <- mapa %>%
+    addPolygons(
+        data = Manzanas_CDMX_TLALPAN,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~SECCION,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Manzanas"     # Nombre del grupo de la capa
+    )
+
+# Agregar la  capa de polígonos a nivel de Secciones
+mapa <- mapa %>%
+    addPolygons(
+        data = Secciones_CDMX_TLALPAN ,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~SECCION,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Secciones"     # Nombre del grupo de la capa
+    )
+
+mapa <- mapa %>%
+    addPolygons(
+        data = ESEM_CDMX_TLALPAN,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~NIVEL,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "AGEB"     # Nombre del grupo de la capa
+    )
+mapa <- mapa %>%
+    addPolygons(
+        data = Circunscripcion_CDMX_TLALPAN,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~Circunscripción_CDMX,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Circunscripciones"     # Nombre del grupo de la capa
+    )
+# Agregar la  capa de polígonos a nivel municipios
+mapa <- mapa %>%
+    addPolygons(
+        data = Municipios_CDMX_TLALPAN,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~NOMBRE,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Municipios"     # Nombre del grupo de la capa
+    )
+# Agregar la segunda capa de Distritos Locales
+mapa <- mapa %>%
+    addPolygons(
+        data = DistritoF_CDMX_TLALPAN,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~DISTRITO,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Distrito Federal"     # Nombre del grupo de la capa
+    )
+
+mapa <- mapa %>%
+    addPolygons(
+        data = DistritoL_CDMX_TLALPAN,
+        fillColor = "white",    # Color de fondo blanco
+        fillOpacity = 0.5,      # Transparencia del fondo
+        label = ~DISTRITO_L,
+        color = "black",        # Color de los bordes
+        weight = 1,             # Grosor de los bordes
+        opacity = 0.8,          # Opacidad de los bordes
+        group = "Distrito Local"     # Nombre del grupo de la capa
+    )
+
+# Agregar la  capa de polígonos con los datos de mapa_TLALPAN y el color según el GanadorC_21
+mapa <- mapa %>%
+    addPolygons(
+        data = mapa_TLALPAN,
+        fillColor = ~colores_Switcher(Switcher),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Es sección Switcher?:", Switcher, "<br>",
+                       "La sección:", Switcher_coalición, "<br>",
+                       "Coalición Ganadora en 2021:", GanadorC_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Partido preponderante en 2012:", Ganador_12, "<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
+                       "Votos por el FAM en la última eleccción:", FAM_21, "<br>",
+                       "Porcentaje de votos por el FAM en la última eleccción:", paste(round(porFAM_21, 2), "%"), "<br>",
+                       "Votos por JHH en la última eleccción:", SHH_21, "<br>",
+                       "Porcentaje de votos por SHH en la última eleccción:", paste(round(porSHH_21, 2), "%"), "<br>",
+                       "Votos Nulos en la última eleccción:", NUM_VOTOS_NULOS_21, "<br>","<br>",
+
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
+        group = "Switcher"       # Nombre del grupo de la capa
+    ) 
+# Agregar la tercer capa de polígonos con los datos de mapa_TLALPAN y el color según el Switcher_coalición
+mapa <- mapa %>%
+    addPolygons(
+        data = mapa_TLALPAN,
+        fillColor = ~colores_GanadorC_21(GanadorC_21),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Es sección Switcher?:", Switcher, "<br>",
+                       "La sección:", Switcher_coalición, "<br>",
+                       "Coalición Ganadora en 2021:", GanadorC_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>","<br>",
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL), 
+        group = "Coalición Ganadora"       # Nombre del grupo de la capa
+    ) 
+
+# Agregar la tercer capa de polígonos con los datos de mapa_TLALPAN y el color según el sugerencia
+mapa <- mapa %>%
+    addPolygons(
+        data = mapa_TLALPAN,
+        fillColor = ~colores_SUGERENCIA(Sugerencia),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Es sección Switcher?:", Switcher, "<br>",
+                       "La sección:", Switcher_coalición, "<br>",
+                       "Coalición Ganadora en 2021:", GanadorC_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Competitividad de la Sección FAM:", CompetitividadD, "<br>",
+                       "Competitividad de la Sección PRD:", CompetitividadP, "<br>",
+                       "Votos por el FAM en la última eleccción:", FAM_21, "<br>",
+                       "Porcentaje de votos por el FAM en la última eleccción:", paste(round(porFAM_21, 2), "%"), "<br>",
+                       "Votos por JHH en la última eleccción:", SHH_21, "<br>",
+                       "Porcentaje de votos por SHH en la última eleccción:", paste(round(porSHH_21, 2), "%"), "<br>",
+                       "Votos Nulos en la última eleccción:", NUM_VOTOS_NULOS_21, "<br>",
+                       "Población Generación Z(18-24 años):", GEN_Z_TOTAL, "<br>",
+                       "Porcentaje de Generación Z:", paste(round(GEN_Z_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Millennials(25-39 años):", MILLENNIALS_TOTAL, "<br>",
+                       "Porcentaje de Millennials:", paste(round(MILLENNIALS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Generación X(40-54 años):", GEN_X_TOTAL, "<br>",
+                       "Porcentaje de Generación X:", paste(round(GEN_X_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Baby Boomers(55-65 años):", BOOMERS_TOTAL, "<br>",
+                       "Porcentaje de Baby Boomers:", paste(round(BOOMERS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
+                       "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL, "<br>",
+                       "Participación:", paste(round(participacion*1, 2), "%"), "<br>", "<br>",
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+        group = "Sugerencia"       # Nombre del grupo de la capa
+    ) 
+# Agregar la quinta capa de polígonos con los datos de mapa_TLALPAN y el color según la competitividad
+mapa <- mapa %>%
+    addPolygons(
+        data = mapa_TLALPAN,
+        fillColor = ~colores_CompetitividadD(CompetitividadD),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "En la sección hay:", CompetitividadD, "<br>",
+                      "Intervalo de competividad:", quintilD, "<br>",
+                       "Coalición Ganadora en 2021:", GanadorC_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+        group = "Competitividad"       # Nombre del grupo de la capa
+    ) 
+
+mapa <- mapa %>%
+    addPolygons(
+        data = mapa_TLALPAN,
+        fillColor = ~colores_CompetitividadP(CompetitividadP),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "En la sección, para el Frente sin el PRD hay:", CompetitividadP, "<br>",
+                      "Voto de la coalición sin el PRD:", diferenciaPRD, "<br>",
+                      "Intervalo de votos sin el PRD:", quintilF, "<br>",
+                       "Votos por el FAM:", FAM_21, "<br>",
+                       "Porcentaje de votos por el FAM:", paste(round(porFAM_21, 2), "%"), "<br>",
+                       "Votos por el PRD:", PRD_21, "<br>",
+                       "Porcentaje de votos por el PRD:", paste(round(porPRD_21, 2), "%"), "<br>",
+                       "Votos por MORENA:", MORENA_21, "<br>",
+                       "Porcentaje de votos por Morena:", paste(round(porMORENA_21, 2), "%"), "<br>",
+                       "Votos por JHH:", SHH_21, "<br>",
+                       "Porcentaje de votos por JHH:", paste(round(porSHH_21, 2), "%"), "<br>",
+                       "Coalición Ganadora actual:", GanadorC_21, "<br>",
+                       "Partido preponderante en 2021:", Ganador_21, "<br>",
+                       "Partido preponderante en 2018:", Ganador_18, "<br>",
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+        group = "Competitividad PRD"       # Nombre del grupo de la capa
+    )
+
+# Agregar capa de polígonos para Participación
+mapa <- mapa %>%
+    addPolygons(
+        data = mapa_TLALPAN,
+        fillColor = ~colores_participacion(Porcen_parti),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                      "En la sección hay:", Porcen_parti, "<br>",
+                      "Participación:", paste(round(participacion*1, 2), "%"), "<br>", "<br>",
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+    group = "Participacion"
+  )
+
+mapa <- mapa %>%
+    addPolygons(
+        data = ESEM_CDMX_TLALPAN,
+        fillColor = ~colores_ESEM(NIVEL),
+        fillOpacity = 0.8,
+        label = ~NIVEL,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Estrato:", NIVEL, "<br>",
+                       "Número de Seccion:", SECCION, "<br>",
+                       "Numero de AGEB:", AGEB),
+        group = "ESEM"       # Nombre del grupo de la capa
+    ) 
+
+# Agregar capa de polígonos para Lista Nominal
+mapa <- mapa %>%
+    addPolygons(
+        data = mapa_TLALPAN,
+        fillColor = ~colores_LN(Tamaños_lista),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                      "En la sección la lista nominal es:", Tamaños_lista, "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL, "<br>", "<br>",
+                       "Municipio:", NOMBRE_MUNICIPIO, "<br>",
+                       "Distrito Local:", DISTRITO_LOCAL, "<br>",
+                       "Distrito Federal:", NOMBRE_DISTRITO_FEDERAL),
+        group = "Lista Nominal"
+    )
+# Agregar capa de polígonos para Gener
+mapa <- mapa %>%
+    addPolygons(
+        data = mapa_TLALPAN,
+        fillColor = ~colores_Gene(Gene_prepo),
+        fillOpacity = 0.8,
+        label = ~SECCION,
+        color = "white",
+        weight = 1,
+        popup = ~paste("Numero de Sección:", SECCION, "<br>",
+                       "¿Cuál es la generación preponderante en la sección?:", Gene_prepo, "<br>",
+                       "Población Generación Z(18-24 años):", GEN_Z_TOTAL, "<br>",
+                       "Porcentaje de Generación Z:", paste(round(GEN_Z_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Millennials(25-39 años):", MILLENNIALS_TOTAL, "<br>",
+                       "Porcentaje de Millennials:", paste(round(MILLENNIALS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Generación X(40-54 años):", GEN_X_TOTAL, "<br>",
+                       "Porcentaje de Generación X:", paste(round(GEN_X_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Baby Boomers(55-65 años):", BOOMERS_TOTAL, "<br>",
+                       "Porcentaje de Baby Boomers:", paste(round(BOOMERS_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Población Silent Generation:(65 y más)", SILENT_TOTAL, "<br>",
+                       "Porcentaje Silent Generation:", paste(round(SILENT_TOTAL_PORCENTAJE*1, 2), "%"), "<br>",
+                       "Electores Hombres:", LISTA_HOMBRES, "<br>",
+                       "Electores  Mujeres:", LISTA_MUJERES, "<br>",
+                       "Lista Nominal para 2024:", LISTA_NOMINAL),
+        group = "Generacion"
+    )
+# Agregar el control de capas al mapa
+mapa <- mapa %>%
+    addLayersControl(
+        baseGroups = c("Manzanas","Colonias", "Secciones","AGEB","Circunscripciones", "Municipios","Distrito Local","Distrito Federal"),
+        overlayGroups = c("Coalición Ganadora","ESEM", "Competitividad","Competitividad PRD", "Switcher","Participacion", "Lista Nominal", "Generacion","Sugerencia"),
+        options = layersControlOptions(collapsed = FALSE)
+    )
+
+# Agregar las leyendas al mapa
+mapa <- mapa %>%
+    addLegend(
+        data = mapa_TLALPAN,
+        pal = colores_GanadorC_21, # Establecer los colores de la leyenda usando colores
+        values = ~GanadorC_21, # Establecer los valores de la leyenda
+        title = "Ganador de la última elección", # Establecer el título de la leyenda
+        position = "bottomleft",
+        layerId = "LeyendaGanadorC_21",
+        group = "Coalición Ganadora"  # Grupo de la leyenda
+    ) %>%
+    addLegend(
+        data = mapa_TLALPAN,
+        pal = colores_CompetitividadD, # Establecer los colores de la leyenda usando colores
+        values = ~CompetitividadD, # Establecer los valores de la leyenda
+          labels = textoLeyendaD, # Texto de la leyenda preparado que incluye intervalos
+        title = "Competitividad Electoral Comparada",
+        position = "bottomleft",
+        layerId = "LeyendaCompetitividad",
+        group = "Competitividad"  # Grupo de la leyenda
+    ) %>%
+    addLegend(
+        data = mapa_TLALPAN,
+        pal = colores_CompetitividadP, # Establecer los colores de la leyenda usando colores
+        values = ~CompetitividadP, # Establecer los valores de la leyenda
+        title = "Competitividad Electoral del Frente sin el PRD",
+        position = "bottomleft",
+        layerId = "LeyendaPRD",
+        group = "Competitividad PRD"  # Grupo de la leyenda
+    ) %>%
+    addLegend(
+        data = mapa_TLALPAN,
+        pal = colores_Switcher, # Establecer los colores de la leyenda usando colores
+        values = ~Switcher, # Establecer los valores de la leyenda
+        title = "Secciones Switcher",
+        position = "bottomleft",
+        layerId = "LeyendaSwitcher",
+        group = "Switcher"  # Grupo de la leyenda
+    ) %>%
+    addLegend(
+        data = mapa_TLALPAN,
+        pal = colores_SUGERENCIA, # Establecer los colores de la leyenda usando colores
+        values = ~Sugerencia, # Establecer los valores de la leyenda
+        title = "Secciones Sugeridas",
+        position = "bottomleft",
+        layerId = "LeyendaSugerencia",
+        group = "Sugerencia"  # Grupo de la leyenda
+    )  %>%
+   addLegend(
+        data = mapa_TLALPAN,
+        pal = colores_participacion, # Establecer los colores de la leyenda usando colores
+        values = ~Porcen_parti, # Establecer los valores de la leyenda
+        title = "Intervalos de Participación",
+        position = "bottomleft",
+        layerId = "Leyendaparticipa",
+        group = "Participacion"  # Grupo de la leyenda
+    )  %>%
+   addLegend(
+        data = mapa_TLALPAN,
+        pal = colores_LN, # Establecer los colores de la leyenda usando colores
+        values = ~Tamaños_lista, # Establecer los valores de la leyenda
+        title = "Lista Nominal por Sección",
+        position = "bottomleft",
+        layerId = "Leyendalista",
+        group = "Lista Nominal"  # Grupo de la leyenda
+    )  %>%
+   addLegend(
+        data = mapa_TLALPAN,
+        pal = colores_Gene, # Establecer los colores de la leyenda usando colores
+        values = ~Gene_prepo, # Establecer los valores de la leyenda
+        title = "Generación preponderante",
+        position = "bottomleft",
+        layerId = "Leyendagene",
+        group = "Generacion"  # Grupo de la leyenda
+    ) 
+
+
+# Agregar el control de HTML al mapa
+mapa <- mapa %>%
+    addControl(
+        html = "<div style='margin-bottom: 10px; text-align: center;'>
+                Alcaldía de Tlalpan de la CDMX<br>
+                Elaborado por Qualia: Asesoria Especializada con datos del INE y el INEGI<br>
+
+                Todos los Derechos Reservados<br><br>
+                NOTA:El uso y distribución de la API es responsabilidad del cliente<br>
+                Contacto: qualiaasesores@gmail.com<br>
+
+            </div>",
+        position = "bottomright"
+    )
+
+# Mostrar el mapa
+mapa
