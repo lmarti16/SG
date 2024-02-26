@@ -87,10 +87,10 @@ Resultados <- Resultados %>%
 
 Resultados_CDMX <- filter(Resultados, ENTIDAD == 9)
 Secciones_CDMX <- filter(sec_mex, ENTIDAD == 9)
-Secciones_CDMX_MH<- filter(Secciones_CDMX, MUNICIPIO == 12)
-Manzanas_CDMX_MH <- filter(Manzanas_CDMX, MUNICIPIO == 12)
-Municipios_CDMX_MH<- filter(Municipios_CDMX, MUNICIPIO == 12)
-Circunscripcion_CDMX_MH <- filter(Circunscripcion, MUNICIPIO == 12)
+Secciones_CDMX_MH<- filter(Secciones_CDMX, MUNICIPIO == 16)
+Manzanas_CDMX_MH <- filter(Manzanas_CDMX, MUNICIPIO == 16)
+Municipios_CDMX_MH<- filter(Municipios_CDMX, MUNICIPIO == 16)
+Circunscripcion_CDMX_MH <- filter(Circunscripcion, MUNICIPIO == 16)
 
 
 # Obtener los valores únicos de MUNICIPIO y DISTRITO_L de Secciones_CDMX_MH 
