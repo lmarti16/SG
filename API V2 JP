@@ -124,7 +124,7 @@ Resultados_MH <- Resultados_MH %>%
     mutate( porSHH_21 = (SHH_21 /TOTAL_VOTOS_21)*100) %>% 
     mutate( participacion = (TOTAL_VOTOS_21 /LISTA_NOMINAL_21)*100) %>% 
     mutate( diferencia = porFAM_21 - porSHH_21) %>%
-    mutate( diferenciaPRI = FAM_21 - PRD_21) 
+    mutate( diferenciaPRI = FAM_21 - PRI_21) 
 
 # Crear quintiles
 quintilesF <- quantile(Resultados_MH$diferenciaPRI, probs = c(0, 0.2, 0.4, 0.6, 0.8, 1), na.rm = TRUE)
@@ -736,6 +736,15 @@ mapa <- mapa %>%
         position = "bottomleft",
         layerId = "Leyendagene",
         group = "Generacion"  # Grupo de la leyenda
+    )  %>%
+   addLegend(
+        data = ESEM_CDMX_MH,
+        pal = colores_ESEM, # Establecer los colores de la leyenda usando colores
+        values = ~NIVEL, # Establecer los valores de la leyenda
+        title = "Estratos socioeconómicos",
+        position = "bottomleft",
+        layerId = "LeyendaESEM",
+        group = "ESEM"  # Grupo de la leyenda
     ) 
 
 
