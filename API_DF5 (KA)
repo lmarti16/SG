@@ -207,7 +207,7 @@ Resultados_DF5 <- Resultados_DF5 %>%
 
 Resultados_DF5 <- Resultados_DF5 %>%
     select(-NOMBRE_ENTIDAD, -MUNICIPIO, -NOMBRE_MUNICIPIO, 
-           -DISTRITO_FEDERAL, -NOMBRE_DISTRITO_FEDERAL, -DISTRITO_LOCAL,-Circunscripción_CDMX)
+           -DISTRITO_FEDERAL, -NOMBRE_DISTRITO_FEDERAL, -DISTRITO_LOCAL,-Circunscripción_CDMX, - ID_circu)
 
 mapa_DF5 <- left_join(Secciones_CDMX_DF5 , Resultados_DF5, by = c("SECCION", "ENTIDAD"))
 
