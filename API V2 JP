@@ -262,7 +262,7 @@ ESEM_CDMX_MH<- st_transform(ESEM_CDMX_MH, crs = 4326)
 mapa_MH$GanadorC_21 <- recode(mapa_MH$GanadorC_21,
                                   "EMPATE" = "Empate",
                                   "FAM" = "Fuerza & Corazón por México",
-                                  "SHH" = "Sigamos Hacemos Historia",
+                                  "SHH" = "Sigamos Haciendo Historia",
                                   "MC" = "Movimiento Ciudadano")
 
 # Reordenar los niveles del factor Sugerencia en el dataframe mapa_MH
@@ -276,12 +276,12 @@ colores_SUGERENCIA <- colorFactor(
 
 # Reordenar los niveles del factor Ganador en 2021
 mapa_MH$GanadorC_21 <- factor(mapa_MH$GanadorC_21,
-                                     levels = c("Sigamos Hacemos Historia", "Fuerza & Corazón por México", "Movimiento Ciudadano","Empate"))
+                                     levels = c("Sigamos Haciendo Historia", "Fuerza & Corazón por México", "Movimiento Ciudadano","Empate"))
 
 # Definir los colores para cada Ganador Coalición
 colores_GanadorC_21 <- colorFactor(
     palette = c("purple", "brown", "darkblue"), 
-    levels = c("Empate", "Sigamos Hacemos Historia", "Fuerza & Corazón por México"))
+    levels = c("Empate", "Sigamos Haciendo Historia", "Fuerza & Corazón por México"))
 
 # Reordenar los niveles del factor CompetitividadD
 mapa_MH$CompetitividadD <- factor(mapa_MH$CompetitividadD,
