@@ -1,0 +1,165 @@
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(stringr)
+library(rio)
+
+# Leer archivo SHP usando read_sf()
+Resultados18C <- read_sf("D:\\Descargas\\COAH\\COAH_PEL_2018\\AYUNTAMIENTOS_csv\\2018_SEE_AYUN_COAH_SEC.csv")
+Resultados21C <- read_sf("D:\\Descargas\\COAH\\COAH_PEL_2021\\AYUNTAMIENTOS_csv\\2021_SEE_AYUN_COAH_SEC.csv")
+Resultados23C <- read_sf("D:\\Descargas\\COAH\\COAH_PEL_2023\\GUBERNATURA_csv\\2023_SEE_GOB_COAH_SEC.csv")
+
+Resultados18C[, -c(3,5,7)] <- lapply(Resultados18C[, -c(3,5,7)], as.numeric)
+Resultados21C[, -c(3,5,7)] <- lapply(Resultados21C[, -c(3,5,7)], as.numeric)
+Resultados23C[, -c(3,5,7)] <- lapply(Resultados23C[, -c(3,5,7)], as.numeric)
+
+Resultados18C <- Resultados18C %>%
+    rename(NOMBRE_MUNICIPIO = MUNICIPIO, MUNICIPIO = ID_MUNICIPIO, ENTIDAD = ID_ESTADO, DISTRITO_L = ID_DISTRITO_LOCAL)
+Resultados21C <- Resultados21C %>%
+    rename(NOMBRE_MUNICIPIO = MUNICIPIO, MUNICIPIO = ID_MUNICIPIO, ENTIDAD = ID_ESTADO, DISTRITO_L = ID_DISTRITO_LOCAL)
+Resultados23C <- Resultados23C %>%
+    rename(NOMBRE_MUNICIPIO = MUNICIPIO, MUNICIPIO = ID_MUNICIPIO, ENTIDAD = ID_ESTADO, DISTRITO_L = ID_DISTRITO_LOCAL)
+
+reseccionamiento <- read_sf("D:\\52556\\Documents\\Secretaria_GralPRI\\reseccionamiento.csv")
+reseccionamiento$ENTIDAD <- as.numeric(reseccionamiento$ENTIDAD)
+reseccionamiento$SECCION_ORIGEN <- as.numeric(reseccionamiento$SECCION_ORIGEN)
+reseccionamiento$SECCION_CREADA <- as.numeric(reseccionamiento$SECCION_CREADA)
+reseccionamiento <- filter(reseccionamiento, ENTIDAD == 5)
+
+#2023
+# Filtrar las filas de Resultados23C donde SECCION está en SECCION_ORIGEN
+nuevos_datos <- Resultados23C %>%
+    filter(!SECCION %in% reseccionamiento$SECCION_ORIGEN)
+
+# Crear un nuevo dataframe con las filas eliminadas
+datos_eliminados <- Resultados23C %>%
+    filter(SECCION %in% reseccionamiento$SECCION_ORIGEN)
+
+# Realizar un left join para asignar SECCION_CREADA a cada valor de SECCION
+datos_eliminados_con_creada <- datos_eliminados %>%
+    left_join(reseccionamiento, by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD"))
+
+# Obtener el número de repeticiones de cada SECCION
+repeticiones_seccion <- table(reseccionamiento$SECCION_ORIGEN)
+
+# Dividir los valores por el número de repeticiones (excluyendo las columnas mencionadas)
+datos_eliminados_divididos <- datos_eliminados_con_creada %>%
+    mutate(across(!c( SECCION_CREADA, "CIRCUNSCRIPCION","ENTIDAD" ,"NOMBRE_ESTADO" , "DISTRITO_L","CABECERA_DISTRITAL_LOCAL", "MUNICIPIO", "NOMBRE_MUNICIPIO","SECCION"), 
+                  ~ . / repeticiones_seccion[match(SECCION, names(repeticiones_seccion))]))
+
+# Eliminar los decimales de todo el dataframe
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    mutate(across(!c( SECCION_CREADA, "CIRCUNSCRIPCION","ENTIDAD" ,"NOMBRE_ESTADO" , "DISTRITO_L","CABECERA_DISTRITAL_LOCAL", "MUNICIPIO", "NOMBRE_MUNICIPIO","SECCION"), floor))
+
+# Cambiar el lugar de SECCION y SECCION_CREADA en datos_eliminados_divididos
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    select(CIRCUNSCRIPCION:SECCION_CREADA, SECCION, everything())
+
+# Eliminar las columnas SECCION y MUNICIPIO
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    select(-SECCION, )
+
+# Cambiar el nombre de SECCION_CREADA a SECCION
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    rename(SECCION = SECCION_CREADA)
+
+# Unir estos datos al dataframe de nuevos_datos utilizando rbind
+Resultados23C <- rbind(nuevos_datos, datos_eliminados_divididos)
+
+#2021
+
+# Filtrar las filas de Resultados21C donde SECCION está en SECCION_ORIGEN
+nuevos_datos <- Resultados21C %>%
+    filter(!SECCION %in% reseccionamiento$SECCION_ORIGEN)
+
+# Crear un nuevo dataframe con las filas eliminadas
+datos_eliminados <- Resultados21C %>%
+    filter(SECCION %in% reseccionamiento$SECCION_ORIGEN)
+
+# Realizar un left join para asignar SECCION_CREADA a cada valor de SECCION
+datos_eliminados_con_creada <- datos_eliminados %>%
+    left_join(reseccionamiento, by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD"))
+
+# Obtener el número de repeticiones de cada SECCION
+repeticiones_seccion <- table(reseccionamiento$SECCION_ORIGEN)
+
+# Dividir los valores por el número de repeticiones (excluyendo las columnas mencionadas)
+datos_eliminados_divididos <- datos_eliminados_con_creada %>%
+    mutate(across(!c( SECCION_CREADA, "CIRCUNSCRIPCION","ENTIDAD" ,"NOMBRE_ESTADO" , "DISTRITO_L","CABECERA_DISTRITAL_LOCAL", "MUNICIPIO", "NOMBRE_MUNICIPIO","SECCION"), 
+                  ~ . / repeticiones_seccion[match(SECCION, names(repeticiones_seccion))]))
+
+# Eliminar los decimales de todo el dataframe
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    mutate(across(!c( SECCION_CREADA, "CIRCUNSCRIPCION","ENTIDAD" ,"NOMBRE_ESTADO" , "DISTRITO_L","CABECERA_DISTRITAL_LOCAL", "MUNICIPIO", "NOMBRE_MUNICIPIO","SECCION"), floor))
+
+# Cambiar el lugar de SECCION y SECCION_CREADA en datos_eliminados_divididos
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    select(CIRCUNSCRIPCION:SECCION_CREADA, SECCION, everything())
+
+# Eliminar las columnas SECCION y MUNICIPIO
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    select(-SECCION, )
+
+# Cambiar el nombre de SECCION_CREADA a SECCION
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    rename(SECCION = SECCION_CREADA)
+
+# Unir estos datos al dataframe de nuevos_datos utilizando rbind
+Resultados21C <- rbind(nuevos_datos, datos_eliminados_divididos)
+
+#2018
+
+# Filtrar las filas de Resultados18C donde SECCION está en SECCION_ORIGEN
+nuevos_datos <- Resultados18C %>%
+    filter(!SECCION %in% reseccionamiento$SECCION_ORIGEN)
+
+# Crear un nuevo dataframe con las filas eliminadas
+datos_eliminados <- Resultados18C %>%
+    filter(SECCION %in% reseccionamiento$SECCION_ORIGEN)
+
+# Realizar un left join para asignar SECCION_CREADA a cada valor de SECCION
+datos_eliminados_con_creada <- datos_eliminados %>%
+    left_join(reseccionamiento, by = c("SECCION" = "SECCION_ORIGEN", "ENTIDAD"))
+
+# Obtener el número de repeticiones de cada SECCION
+repeticiones_seccion <- table(reseccionamiento$SECCION_ORIGEN)
+
+# Dividir los valores por el número de repeticiones (excluyendo las columnas mencionadas)
+datos_eliminados_divididos <- datos_eliminados_con_creada %>%
+    mutate(across(!c( SECCION_CREADA, "CIRCUNSCRIPCION","ENTIDAD" ,"NOMBRE_ESTADO" , "DISTRITO_L","CABECERA_DISTRITAL_LOCAL", "MUNICIPIO", "NOMBRE_MUNICIPIO","SECCION"), 
+                  ~ . / repeticiones_seccion[match(SECCION, names(repeticiones_seccion))]))
+
+# Eliminar los decimales de todo el dataframe
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    mutate(across(!c( SECCION_CREADA, "CIRCUNSCRIPCION","ENTIDAD" ,"NOMBRE_ESTADO" , "DISTRITO_L","CABECERA_DISTRITAL_LOCAL", "MUNICIPIO", "NOMBRE_MUNICIPIO","SECCION"), floor))
+
+# Cambiar el lugar de SECCION y SECCION_CREADA en datos_eliminados_divididos
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    select(CIRCUNSCRIPCION:SECCION_CREADA, SECCION, everything())
+
+# Eliminar las columnas SECCION y MUNICIPIO
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    select(-SECCION, )
+
+# Cambiar el nombre de SECCION_CREADA a SECCION
+datos_eliminados_divididos <- datos_eliminados_divididos %>%
+    rename(SECCION = SECCION_CREADA)
+
+# Unir estos datos al dataframe de nuevos_datos utilizando rbind
+Resultados18C <- rbind(nuevos_datos, datos_eliminados_divididos)
+
+
+# Guarda el dataframe como un archivo CSV
+export(Resultados18C, "Resultados18C(resec).csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise = FALSE)
+export(Resultados21C, "Resultados21C(resec).csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise = FALSE)
+export(Resultados23C, "Resultados23C(resec).csv", rio = "csv", fileEncoding = "UTF-8", utf8sanitise = FALSE)
