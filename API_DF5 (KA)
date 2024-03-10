@@ -115,6 +115,15 @@ Colonias_CDMX <- filter(Colonias_MX, CVE_ENT == "09")
 Colonias_CDMX <- st_transform(Colonias_CDMX, st_crs(DistritoF_CDMX_DF5 ))
 Colonias_CDMX_DF5 <- st_intersection(DistritoF_CDMX_DF5 , Colonias_CDMX)
 
+# Calculamos el área de cada geometría resultante
+Colonias_CDMX_DF5$area <- st_area(Colonias_CDMX_DF5)
+
+# Definimos un umbral mínimo de área como un objeto de tipo 'units'
+umbral_area <- set_units(1000, m^2) # Ajusta este valor según tus necesidades
+
+# Filtramos para excluir geometrías con área menor al umbral
+Colonias_CDMX_DF5 <- Colonias_CDMX_DF5[Colonias_CDMX_DF5$area > umbral_area, ]
+
 #Define ESEM
 ESEM_CDMX <- st_transform(ESEM_CDMX, st_crs(DistritoF_CDMX_DF5 ))
 ESEM_CDMX_DF5<- st_intersection(DistritoF_CDMX_DF5, ESEM_CDMX )
