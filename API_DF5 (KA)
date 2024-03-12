@@ -15,6 +15,7 @@ library(leaflet)
 library(rio)
 library(stringr)
 library(RColorBrewer)
+library(units)
 
 # Leer archivo SHP usando read_sf()
 Manzanas_CDMX <- read_sf("D:\\Descargas\\SHAPEFILES_MEX\\09 CIUDAD DE MEXICO\\MANZANA.shp")
