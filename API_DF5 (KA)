@@ -274,12 +274,12 @@ mapa_DF5$GanadorC_21 <- recode(mapa_DF5$GanadorC_21,
 
 # Reordenar los niveles del factor Sugerencia en el dataframe mapa_DF5
 mapa_DF5$Sugerencia <- factor(mapa_DF5$Sugerencia,
-                                     levels = c("Sugerencia prioritaria", "Sugerencia secundaria", "Sugerencia terciaria","Sección no sugerida"))
+                                     levels = c("SI", "NO"))
 
 # Definir los colores para cada nivel de sugerencia
 colores_SUGERENCIA <- colorFactor(
-    palette = c("red", "darkblue","yellow", "white"), 
-                                     levels = c("Sugerencia prioritaria", "Sugerencia secundaria", "Sugerencia terciaria","Sección no sugerida"))
+    palette = c("red", "white"), 
+                       levels = c("SI", "NO"))
 
 # Reordenar los niveles del factor Ganador en 2021
 mapa_DF5$GanadorC_21 <- factor(mapa_DF5$GanadorC_21,
