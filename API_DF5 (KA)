@@ -198,22 +198,15 @@ Resultados_DF5 <- Resultados_DF5 %>%
 
 Resultados_DF5 <- Resultados_DF5 %>%
     mutate(Sugerencia = case_when(
-        # Prioritaria: La más alta participación y lista nominal, y en el quintil 3 de diferencia
-        quintilLN == labels_custom(quintilesLN)[5] & quintilD == labels_custom(quintilesD)[5] & quintilparti == labels_custom(quintilesparti)[3] ~ "Sugerencia prioritaria",
-        
-        # Secundaria: Primera o segunda más alta participación, también primera o segunda más alta lista nominal, y en el quintil 3 de diferencia
-        (quintilLN %in% c(labels_custom(quintilesLN)[4], labels_custom(quintilesLN)[5]) &
-             quintilparti %in% c(labels_custom(quintilesparti)[4], labels_custom(quintilesparti)[5]) &
-             quintilD == labels_custom(quintilesD)[3]) ~ "Sugerencia secundaria",
-        
-        # Terciaria: En el quintil 3 de diferencia, o todas las secciones en los quintiles 4-5 de LN o de participación
-        quintilD == labels_custom(quintilesD)[3] |
-            quintilLN %in% c(labels_custom(quintilesLN)[5]) |
-            quintilparti %in% c(labels_custom(quintilesparti)[5]) ~ "Sugerencia terciaria",
+        # Prioritaria: La más alta participación o lista nominal más alta o en el quintil 3 de diferencia
+        quintilLN == labels_custom(quintilesLN)[5] |
+        quintilparti == labels_custom(quintilesparti)[5] |
+        quintilD == labels_custom(quintilesD)[3] ~ "SI",
         
         # Caso predeterminado
-        TRUE ~ "Sección no sugerida"
+        TRUE ~ "NO"
     ))
+
 
 Resultados_DF5 <- Resultados_DF5 %>%
     select(-NOMBRE_ENTIDAD, -MUNICIPIO, -NOMBRE_MUNICIPIO, 
