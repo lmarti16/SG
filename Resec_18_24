@@ -1,0 +1,88 @@
+# Cargar librerías
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(reshape2)	
+library(tidyr)
+library(readxl)
+library(colorspace)
+library(ggspatial)
+library(ggthemes)
+library(wesanderson)
+library(pdftools)
+library(stringr)
+library(rio)
+
+secciones_24 <- read_sf("D:\\Descargas\\secciones_2024.gpkg\\secciones_2024.gpkg")
+secciones_24 <- st_drop_geometry(secciones_24)
+secciones_24<- secciones_24 %>% select(SECCION,ENTIDAD)
+
+
+Resultados_18 <- read_sf("D:\\Descargas\\DIPUTACIONES_FED_MR_2018\\DIPUTACIONES_FED_MR_2018\\2018_SEE_DIP_FED_MR_NAL_SEC.csv")
+reseecionamiento <- read_sf ("D:\\52556\\Documents\\Secretaria_GralPRI\\reseccionamiento.csv")
+reseecionamiento$SECCION_CREADA <- as.numeric(reseecionamiento$SECCION_CREADA)
+reseecionamiento$SECCION_ORIGEN <- as.numeric(reseecionamiento$SECCION_ORIGEN)
+reseecionamiento$ENTIDAD <- as.numeric(reseecionamiento$ENTIDAD)
+# Eliminar columnas de candidatos independientes
+columnas_a_eliminar <- grep("CAND_IND", names(Resultados_18), value = TRUE)
+Resultados_18 <- Resultados_18 %>% select(-all_of(columnas_a_eliminar))
+
+Resultados_18[, -c(3,5,7)] <- lapply(Resultados_18[, -c(3,5,7)], as.numeric)
+
+Resultados_18 <- Resultados_18 %>%
+    rename(ENTIDAD = ID_ESTADO)
+
+reseecionamiento <- reseecionamiento %>%
+    rename(SECCION = SECCION_ORIGEN)
+
+Resultados_18E <- inner_join(Resultados_18, reseecionamiento, by = c("ENTIDAD", "SECCION"))
+Resultados_18L <- anti_join(Resultados_18, reseecionamiento, by = c("ENTIDAD", "SECCION"))
+
+# Contar la frecuencia de cada combinación de ENTIDAD y SECCION
+frecuencia_combinaciones <- Resultados_18E %>%
+    group_by(ENTIDAD, SECCION) %>%
+    summarise(frecuencia = n())
+
+# Unir los datos originales con la frecuencia de las combinaciones
+Resultados_18E <- left_join(Resultados_18E , frecuencia_combinaciones, by = c("ENTIDAD", "SECCION"))
+
+# Dividir los valores de todas las columnas menos los deseados por la frecuencia
+columnas_a_dividir <- setdiff(names(Resultados_18E), c("CIRCUNSCRIPCION", "ENTIDAD", "NOMBRE_ESTADO", "ID_DISTRITO", "CABECERA_DISTRITAL", "ID_MUNICIPIO", "MUNICIPIO", "SECCION", "SECCION_CREADA", "frecuencia"))
+
+Resultados_18E <- Resultados_18E %>%
+    mutate(across(all_of(columnas_a_dividir), ~./frecuencia))
+
+# Eliminar los decimales de todo el dataframe
+Resultados_18E <- Resultados_18E %>%
+    mutate(across(!c("CIRCUNSCRIPCION", "ENTIDAD", "NOMBRE_ESTADO", "ID_DISTRITO", "CABECERA_DISTRITAL", "ID_MUNICIPIO", "MUNICIPIO", "SECCION", "SECCION_CREADA", "frecuencia"), floor))
+
+# Cambiar el lugar de SECCION y SECCION_CREADA en datos_eliminados_divididos
+Resultados_18E <- Resultados_18E %>%
+    select(CIRCUNSCRIPCION:SECCION, SECCION_CREADA, everything())
+
+# Eliminar las columnas SECCION y MUNICIPIO
+Resultados_18E <- Resultados_18E %>%
+    select(-SECCION, -frecuencia)
+
+# Cambiar el nombre de SECCION_CREADA a SECCION
+Resultados_18E <- Resultados_18E %>%
+    rename(SECCION = SECCION_CREADA)
+
+# Unir estos datos al dataframe de nuevos_datos utilizando rbind
+Resultados_18 <- rbind(Resultados_18L, Resultados_18E)
+
+# Procesar Resultados_18 para consolidar duplicados
+Resultados_18 <- Resultados_18 %>%
+    group_by(SECCION, ENTIDAD) %>%
+    mutate(frecuencia = n()) %>%
+    arrange(desc(frecuencia), .by_group = TRUE) %>%
+    slice(1) %>% # Tomar el primero de cada grupo, que es el más frecuente o aleatorio en caso de empate
+    ungroup() %>%
+    select(-frecuencia) # Eliminar la columna de frecuencia añadida
+
+Resultados_18 <- Resultados_18 %>% 
+    mutate( FAM_18 = (PAN + PRI + PRD ))
+
+Resultados_18 <- Resultados_18 %>% 
+    mutate( SHH_18 = (MORENA + PVEM + PT +ES + PT_MORENA_ES + PT_ES + MORENA_ES))
